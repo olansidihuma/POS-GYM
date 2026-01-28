@@ -89,8 +89,20 @@ if (!$type) {
 $activeSql = "SELECT id FROM membership_subscriptions WHERE member_id = ? AND status = 'active'";
 $activeSubscription = fetchOne($conn, $activeSql, [$memberId]);
 
-// Calculate dates
+// Validate and calculate dates
 $start_date = isset($input['start_date']) ? $input['start_date'] : date('Y-m-d');
+
+// Validate date format
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || !strtotime($start_date)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid start_date format. Use YYYY-MM-DD'
+    ]);
+    closeConnection($conn);
+    exit();
+}
+
 $end_date = date('Y-m-d', strtotime($start_date . ' + ' . $type['duration_days'] . ' days'));
 
 // If there's an active subscription, expire it first

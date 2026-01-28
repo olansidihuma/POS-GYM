@@ -142,7 +142,7 @@ try {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('sdddddddssddsii', $transactionCode, $subtotal, $discountAmount,
+    $stmt->bind_param('sdddddddssddsi', $transactionCode, $subtotal, $discountAmount,
                      $serviceChargePercent, $serviceChargeAmount, $taxPercent, $taxAmount,
                      $totalAmount, $paymentMethod, $paymentProof, $paymentAmount,
                      $changeAmount, $notes, $createdBy);

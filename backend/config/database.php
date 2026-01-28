@@ -4,19 +4,23 @@
  */
 
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'gym_management');
+// TODO: Move these to environment variables for production
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'gym_management');
 
 // Create database connection
 function getConnection() {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     
     if ($conn->connect_error) {
+        // Log error details server-side
+        error_log('Database connection failed: ' . $conn->connect_error);
+        // Return generic error to client
         die(json_encode([
             'success' => false,
-            'message' => 'Database connection failed: ' . $conn->connect_error
+            'message' => 'Database connection failed. Please try again later.'
         ]));
     }
     
@@ -36,9 +40,10 @@ function executeQuery($conn, $sql, $params = []) {
     $stmt = $conn->prepare($sql);
     
     if (!$stmt) {
+        error_log('Query preparation failed: ' . $conn->error);
         return [
             'success' => false,
-            'message' => 'Query preparation failed: ' . $conn->error
+            'message' => 'Query preparation failed. Please try again.'
         ];
     }
     
@@ -61,9 +66,10 @@ function executeQuery($conn, $sql, $params = []) {
     }
     
     if (!$stmt->execute()) {
+        error_log('Query execution failed: ' . $stmt->error);
         return [
             'success' => false,
-            'message' => 'Query execution failed: ' . $stmt->error
+            'message' => 'Query execution failed. Please try again.'
         ];
     }
     

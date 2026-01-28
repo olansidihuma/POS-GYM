@@ -3,8 +3,11 @@
  * Authentication Helper Functions
  */
 
-// Generate JWT token (simple implementation for production use a library like firebase/php-jwt)
+// Generate JWT token (custom implementation - for production consider using firebase/php-jwt library)
 function generateToken($userId, $username, $role) {
+    // TODO: Move secret key to environment variable for production
+    $secretKey = getenv('JWT_SECRET') ?: 'gym_secret_key_2024_CHANGE_THIS_IN_PRODUCTION';
+    
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
     $payload = json_encode([
         'user_id' => $userId,
@@ -16,7 +19,7 @@ function generateToken($userId, $username, $role) {
     $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
     $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
     
-    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, 'gym_secret_key_2024', true);
+    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secretKey, true);
     $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
     
     return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
@@ -34,10 +37,12 @@ function verifyToken($token) {
     $payload = base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[1]));
     $signatureProvided = $tokenParts[2];
     
+    $secretKey = getenv('JWT_SECRET') ?: 'gym_secret_key_2024_CHANGE_THIS_IN_PRODUCTION';
+    
     $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
     $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
     
-    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, 'gym_secret_key_2024', true);
+    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secretKey, true);
     $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
     
     if ($base64UrlSignature !== $signatureProvided) {

@@ -63,6 +63,17 @@ $kecamatan_id = isset($input['kecamatan_id']) && !empty($input['kecamatan_id']) 
 $kelurahan_id = isset($input['kelurahan_id']) && !empty($input['kelurahan_id']) ? intval($input['kelurahan_id']) : null;
 $birth_place = isset($input['birth_place']) ? trim($input['birth_place']) : null;
 $birth_date = isset($input['birth_date']) && !empty($input['birth_date']) ? $input['birth_date'] : null;
+
+// Validate birth_date format if provided
+if ($birth_date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth_date) || !strtotime($birth_date))) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid birth_date format. Use YYYY-MM-DD'
+    ]);
+    closeConnection($conn);
+    exit();
+}
 $phone = isset($input['phone']) ? trim($input['phone']) : null;
 $identity_number = isset($input['identity_number']) ? trim($input['identity_number']) : null;
 $emergency_contact_name = isset($input['emergency_contact_name']) ? trim($input['emergency_contact_name']) : null;
@@ -75,7 +86,7 @@ $sql = "INSERT INTO members (member_code, full_name, nickname, address, dukuh, r
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('sssssssiisssssss', $memberCode, $full_name, $nickname, $address, $dukuh, $rt, $rw,
+$stmt->bind_param('sssssssiiissssss', $memberCode, $full_name, $nickname, $address, $dukuh, $rt, $rw,
                   $kabupaten_id, $kecamatan_id, $kelurahan_id, $birth_place, $birth_date,
                   $phone, $identity_number, $emergency_contact_name, $emergency_contact_phone);
 

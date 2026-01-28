@@ -23,7 +23,28 @@ $conn = getConnection();
 $dateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : date('Y-m-01'); // First day of current month
 $dateTo = isset($_GET['date_to']) ? $_GET['date_to'] : date('Y-m-d'); // Today
 
-// Validate dates
+// Validate date format
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || !strtotime($dateFrom)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid date_from format. Use YYYY-MM-DD'
+    ]);
+    closeConnection($conn);
+    exit();
+}
+
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) || !strtotime($dateTo)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid date_to format. Use YYYY-MM-DD'
+    ]);
+    closeConnection($conn);
+    exit();
+}
+
+// Validate date range
 if (strtotime($dateFrom) > strtotime($dateTo)) {
     http_response_code(400);
     echo json_encode([
