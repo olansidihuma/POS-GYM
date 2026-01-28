@@ -1,0 +1,73 @@
+name: gym_management_app
+description: A production-ready Gym Management System with POS integration
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  get: ^4.6.6
+  
+  # HTTP Client
+  dio: ^5.4.0
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # QR Code
+  qr_flutter: ^4.1.0
+  qr_code_scanner: ^1.0.1
+  
+  # Image Picker
+  image_picker: ^1.0.7
+  
+  # Bluetooth Printer
+  blue_thermal_printer: ^1.2.2
+  
+  # PDF Generation
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  
+  # Excel Generation
+  excel: ^4.0.2
+  
+  # Date Formatting
+  intl: ^0.18.1
+  
+  # Permission Handler
+  permission_handler: ^11.2.0
+  
+  # File Picker
+  file_picker: ^6.1.1
+  
+  # Path Provider
+  path_provider: ^2.1.2
+  
+  # Cached Network Image
+  cached_network_image: ^3.3.1
+  
+  # Icons
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+  
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
+        - asset: fonts/Roboto-Bold.ttf
+          weight: 700
