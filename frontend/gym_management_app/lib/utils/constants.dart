@@ -5,15 +5,17 @@ class AppConstants {
   static const String baseUrl = 'http://localhost/gym_management/backend/api';
   static const String apiVersion = '/v1';
   
-  // API Endpoints
+  // API Endpoints (relative paths from baseUrl)
   static const String loginEndpoint = '/auth/login.php';
   static const String membersEndpoint = '/members';
   static const String membershipEndpoint = '/membership';
   static const String attendanceEndpoint = '/attendance';
-  static const String productsEndpoint = '/products';
-  static const String transactionsEndpoint = '/transactions';
+  static const String posEndpoint = '/pos';
+  static const String productsEndpoint = '/pos';
+  static const String transactionsEndpoint = '/pos';
   static const String reportsEndpoint = '/reports';
   static const String masterDataEndpoint = '/master';
+  static const String regionsEndpoint = '/master/regions.php';
   
   // Local Storage Keys
   static const String authTokenKey = 'auth_token';

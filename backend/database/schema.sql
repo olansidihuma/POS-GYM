@@ -19,7 +19,9 @@ CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    email VARCHAR(100),
     full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
     role_id INT NOT NULL,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -27,11 +29,20 @@ CREATE TABLE users (
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
--- Table: regions (kabupaten)
-CREATE TABLE kabupaten (
+-- Table: provinsi
+CREATE TABLE provinsi (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     status ENUM('active', 'inactive') DEFAULT 'active'
+);
+
+-- Table: regions (kabupaten)
+CREATE TABLE kabupaten (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provinsi_id INT,
+    name VARCHAR(100) NOT NULL,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    FOREIGN KEY (provinsi_id) REFERENCES provinsi(id)
 );
 
 -- Table: kecamatan
@@ -318,21 +329,35 @@ INSERT INTO settings (setting_key, setting_value, description) VALUES
 ('tax_percent', '10', 'Default tax percentage');
 
 -- Sample regional data (you can add more based on your region)
-INSERT INTO kabupaten (name) VALUES
-('Jakarta Pusat'),
-('Jakarta Utara'),
-('Jakarta Selatan'),
-('Jakarta Timur'),
-('Jakarta Barat');
+INSERT INTO provinsi (name) VALUES
+('DKI Jakarta'),
+('Jawa Barat'),
+('Jawa Tengah'),
+('Jawa Timur'),
+('Banten');
+
+INSERT INTO kabupaten (provinsi_id, name) VALUES
+(1, 'Jakarta Pusat'),
+(1, 'Jakarta Utara'),
+(1, 'Jakarta Selatan'),
+(1, 'Jakarta Timur'),
+(1, 'Jakarta Barat'),
+(2, 'Bandung'),
+(2, 'Bekasi'),
+(2, 'Bogor');
 
 INSERT INTO kecamatan (kabupaten_id, name) VALUES
 (1, 'Tanah Abang'),
 (1, 'Menteng'),
 (2, 'Kelapa Gading'),
-(3, 'Kebayoran Baru');
+(3, 'Kebayoran Baru'),
+(6, 'Coblong'),
+(6, 'Bandung Wetan');
 
 INSERT INTO kelurahan (kecamatan_id, name) VALUES
 (1, 'Kebon Kacang'),
 (1, 'Petamburan'),
 (2, 'Menteng'),
-(3, 'Kelapa Gading Barat');
+(3, 'Kelapa Gading Barat'),
+(5, 'Dago'),
+(5, 'Sekeloa');

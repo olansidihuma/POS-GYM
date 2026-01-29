@@ -25,19 +25,19 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] ?? 0,
-      username: json['username'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] ?? '',
-      fullName: json['full_name'],
-      phone: json['phone'],
-      avatar: json['avatar'],
-      isActive: json['is_active'] == 1 || json['is_active'] == true,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      id: json['id'] is int ? json['id'] : (json['id'] != null ? int.tryParse(json['id'].toString()) ?? 0 : 0),
+      username: json['username']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      role: json['role']?.toString() ?? '',
+      fullName: json['full_name']?.toString(),
+      phone: json['phone']?.toString(),
+      avatar: json['avatar']?.toString(),
+      isActive: json['is_active'] == 1 || json['is_active'] == true || json['status'] == 'active',
+      createdAt: json['created_at'] != null && json['created_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['created_at'].toString()) 
           : null,
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
+      updatedAt: json['updated_at'] != null && json['updated_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['updated_at'].toString()) 
           : null,
     );
   }
