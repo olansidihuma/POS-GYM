@@ -229,7 +229,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           color: Colors.white,
                         ),
                       ),
-                      title: Text(attendance.memberName ?? 'Unknown'),
+                      title: Text(
+                        attendance.memberName ?? 'Unknown',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,14 +245,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ],
                       ),
                       trailing: !attendance.isCheckedOut
-                          ? ElevatedButton(
-                              onPressed: () {
-                                controller.checkOut(attendance.id!);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.error,
+                          ? SizedBox(
+                              width: 90,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  controller.checkOut(attendance.id!);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.error,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                ),
+                                child: const Text(
+                                  'Check Out',
+                                  style: TextStyle(fontSize: 12),
+                                ),
                               ),
-                              child: const Text('Check Out'),
                             )
                           : null,
                     ),

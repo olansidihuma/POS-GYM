@@ -89,9 +89,17 @@ class AttendanceService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Attendance> attendances = (response.data['data'] as List)
-            .map((json) => Attendance.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Attendance> attendances;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          attendances = data.map((json) => Attendance.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          attendances = [Attendance.fromJson(data)];
+        } else {
+          attendances = [];
+        }
 
         return {
           'success': true,

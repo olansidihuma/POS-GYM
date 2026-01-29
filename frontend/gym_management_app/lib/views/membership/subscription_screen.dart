@@ -143,29 +143,40 @@ class SubscriptionScreen extends StatelessWidget {
   ) {
     Get.defaultDialog(
       title: 'Select Member',
-      content: SizedBox(
-        width: 300,
-        height: 400,
-        child: Obx(() {
-          if (memberController.members.isEmpty) {
-            return const Center(child: Text('No members found'));
-          }
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 400,
+          maxHeight: 400,
+          minHeight: 200,
+        ),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Obx(() {
+            if (memberController.members.isEmpty) {
+              return const Center(child: Text('No members found'));
+            }
 
-          return ListView.builder(
-            itemCount: memberController.members.length,
-            itemBuilder: (context, index) {
-              final member = memberController.members[index];
-              return ListTile(
-                title: Text(member.fullName),
-                subtitle: Text(member.memberCode),
-                onTap: () {
-                  Get.back();
-                  _showPaymentDialog(controller, member.id!, package.id!);
-                },
-              );
-            },
-          );
-        }),
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: memberController.members.length,
+              itemBuilder: (context, index) {
+                final member = memberController.members[index];
+                return ListTile(
+                  title: Text(
+                    member.fullName,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  subtitle: Text(member.memberCode),
+                  onTap: () {
+                    Get.back();
+                    _showPaymentDialog(controller, member.id!, package.id!);
+                  },
+                );
+              },
+            );
+          }),
+        ),
       ),
     );
   }
@@ -173,31 +184,42 @@ class SubscriptionScreen extends StatelessWidget {
   void _showRenewalDialog(MembershipController controller, int memberId) {
     Get.defaultDialog(
       title: 'Renew Membership',
-      content: SizedBox(
-        width: 300,
-        height: 300,
-        child: Obx(() {
-          return ListView.builder(
-            itemCount: controller.packages.length,
-            itemBuilder: (context, index) {
-              final package = controller.packages[index];
-              return ListTile(
-                title: Text(package.name),
-                subtitle: Text(
-                  NumberFormat.currency(
-                    locale: 'id_ID',
-                    symbol: 'Rp ',
-                    decimalDigits: 0,
-                  ).format(package.price),
-                ),
-                onTap: () {
-                  Get.back();
-                  _showPaymentDialog(controller, memberId, package.id!, isRenewal: true);
-                },
-              );
-            },
-          );
-        }),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 400,
+          maxHeight: 300,
+          minHeight: 150,
+        ),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Obx(() {
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: controller.packages.length,
+              itemBuilder: (context, index) {
+                final package = controller.packages[index];
+                return ListTile(
+                  title: Text(
+                    package.name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  subtitle: Text(
+                    NumberFormat.currency(
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(package.price),
+                  ),
+                  onTap: () {
+                    Get.back();
+                    _showPaymentDialog(controller, memberId, package.id!, isRenewal: true);
+                  },
+                );
+              },
+            );
+          }),
+        ),
       ),
     );
   }

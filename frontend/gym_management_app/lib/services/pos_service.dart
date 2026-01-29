@@ -28,9 +28,17 @@ class PosService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Product> products = (response.data['data'] as List)
-            .map((json) => Product.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Product> products;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          products = data.map((json) => Product.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          products = [Product.fromJson(data)];
+        } else {
+          products = [];
+        }
 
         return {
           'success': true,
@@ -58,9 +66,17 @@ class PosService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<ProductCategory> categories = (response.data['data'] as List)
-            .map((json) => ProductCategory.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<ProductCategory> categories;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          categories = data.map((json) => ProductCategory.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          categories = [ProductCategory.fromJson(data)];
+        } else {
+          categories = [];
+        }
 
         return {
           'success': true,
@@ -131,9 +147,17 @@ class PosService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Transaction> transactions = (response.data['data'] as List)
-            .map((json) => Transaction.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Transaction> transactions;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          transactions = data.map((json) => Transaction.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          transactions = [Transaction.fromJson(data)];
+        } else {
+          transactions = [];
+        }
 
         return {
           'success': true,

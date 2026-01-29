@@ -12,9 +12,17 @@ class MembershipService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<MembershipPackage> packages = (response.data['data'] as List)
-            .map((json) => MembershipPackage.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<MembershipPackage> packages;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          packages = data.map((json) => MembershipPackage.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          packages = [MembershipPackage.fromJson(data)];
+        } else {
+          packages = [];
+        }
 
         return {
           'success': true,
@@ -116,9 +124,17 @@ class MembershipService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Membership> memberships = (response.data['data'] as List)
-            .map((json) => Membership.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Membership> memberships;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          memberships = data.map((json) => Membership.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          memberships = [Membership.fromJson(data)];
+        } else {
+          memberships = [];
+        }
 
         return {
           'success': true,
@@ -146,9 +162,17 @@ class MembershipService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Membership> memberships = (response.data['data'] as List)
-            .map((json) => Membership.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Membership> memberships;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          memberships = data.map((json) => Membership.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          memberships = [Membership.fromJson(data)];
+        } else {
+          memberships = [];
+        }
 
         return {
           'success': true,

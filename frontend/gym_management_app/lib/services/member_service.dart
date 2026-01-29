@@ -29,9 +29,17 @@ class MemberService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<Member> members = (response.data['data'] as List)
-            .map((json) => Member.fromJson(json))
-            .toList();
+        final data = response.data['data'];
+        final List<Member> members;
+        
+        // Handle both array and single object responses
+        if (data is List) {
+          members = data.map((json) => Member.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          members = [Member.fromJson(data)];
+        } else {
+          members = [];
+        }
 
         return {
           'success': true,

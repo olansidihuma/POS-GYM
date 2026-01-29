@@ -239,7 +239,11 @@ class PosScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = controller.cartItems[index];
                 return ListTile(
-                  title: Text(item.productName),
+                  title: Text(
+                    item.productName,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                   subtitle: Text(
                     NumberFormat.currency(
                       locale: 'id_ID',
@@ -250,9 +254,14 @@ class PosScreen extends StatelessWidget {
                   trailing: SizedBox(
                     width: 120,
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline),
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                           onPressed: () {
                             controller.updateCartItemQuantity(
                               index,
@@ -260,9 +269,18 @@ class PosScreen extends StatelessWidget {
                             );
                           },
                         ),
-                        Text('${item.quantity}'),
+                        SizedBox(
+                          width: 24,
+                          child: Text(
+                            '${item.quantity}',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                           onPressed: () {
                             controller.updateCartItemQuantity(
                               index,

@@ -94,15 +94,23 @@ class MemberListScreen extends StatelessWidget {
                     ? AppColors.success
                     : AppColors.error,
                 child: Text(
-                  member.fullName[0].toUpperCase(),
+                  member.fullName.isNotEmpty ? member.fullName[0].toUpperCase() : '?',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
-              title: Text(member.fullName),
+              title: Text(
+                member.fullName,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(member.memberCode),
+                  Text(
+                    member.memberCode,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                   Text(
                     'Expires: ${member.membershipExpiry != null ? member.membershipExpiry.toString().split(' ')[0] : 'N/A'}',
                     style: TextStyle(
@@ -110,6 +118,8 @@ class MemberListScreen extends StatelessWidget {
                           ? AppColors.success
                           : AppColors.error,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -175,23 +185,27 @@ class MemberListScreen extends StatelessWidget {
                       ? AppColors.success
                       : AppColors.error,
                   child: Text(
-                    member.fullName[0].toUpperCase(),
+                    member.fullName.isNotEmpty ? member.fullName[0].toUpperCase() : '?',
                     style: const TextStyle(color: Colors.white, fontSize: 24),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  member.fullName,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    member.fullName,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   member.memberCode,
                   style: AppTextStyles.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const Spacer(),
                 Row(
@@ -199,12 +213,18 @@ class MemberListScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                       onPressed: () {
                         Get.toNamed(AppRoutes.memberForm, arguments: member);
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                       onPressed: () {
                         _confirmDelete(controller, member.id!);
                       },
