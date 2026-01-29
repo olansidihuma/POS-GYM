@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../controllers/attendance_controller.dart';
 import '../../widgets/loading_widget.dart';
@@ -8,7 +7,7 @@ import 'package:intl/intl.dart';
 
 /// Attendance screen with USB barcode/QR scanner support.
 /// USB scanners act as keyboard input devices (keyboard wedge mode),
-/// so we use a TextField with RawKeyboardListener to capture scanned data.
+/// so we use a TextField to capture scanned data.
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
 

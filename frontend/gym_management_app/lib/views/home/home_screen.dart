@@ -241,14 +241,14 @@ class HomeScreen extends StatelessWidget {
                           const Color(0xFF64B5F6),
                         ),
                         _buildModernStatCard(
-                          'Monthly Visits',
+                          'Monthly Check-ins',
                           '${stats?.monthlyCheckIns ?? 0}',
                           Icons.calendar_month_rounded,
                           const Color(0xFFFF9800),
                           const Color(0xFFFFB74D),
                         ),
                         _buildModernStatCard(
-                          'Total Visits',
+                          'Total Check-ins',
                           '${stats?.totalCheckIns ?? 0}',
                           Icons.bar_chart_rounded,
                           const Color(0xFF9C27B0),
