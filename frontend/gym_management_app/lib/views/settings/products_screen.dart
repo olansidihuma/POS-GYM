@@ -178,6 +178,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Get.snackbar('Error', 'Please enter price');
                     return;
                   }
+                  final price = double.tryParse(priceController.text);
+                  if (price == null || price <= 0) {
+                    Get.snackbar('Error', 'Please enter a valid price greater than 0');
+                    return;
+                  }
+                  final stock = int.tryParse(stockController.text);
+                  if (stock == null || stock < 0) {
+                    Get.snackbar('Error', 'Please enter a valid stock (0 or greater)');
+                    return;
+                  }
                   if (selectedCategoryId == null) {
                     Get.snackbar('Error', 'Please select a category');
                     return;
@@ -191,8 +201,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     name: nameController.text.trim(),
                     description: descriptionController.text.trim(),
                     categoryId: selectedCategoryId!,
-                    price: double.tryParse(priceController.text) ?? 0,
-                    stock: int.tryParse(stockController.text) ?? 0,
+                    price: price,
+                    stock: stock,
                     isActive: isActive,
                   );
                   

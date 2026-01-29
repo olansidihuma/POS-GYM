@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/constants.dart';
-import '../../services/auth_service.dart';
 import 'profile_screen.dart';
 import 'user_management_screen.dart';
 import 'product_categories_screen.dart';
@@ -139,7 +138,6 @@ class SettingsScreen extends StatelessWidget {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
-    final AuthService authService = AuthService();
     bool isLoading = false;
 
     Get.dialog(
@@ -193,6 +191,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: isLoading ? null : () async {
+                  // Validate before showing loading state
                   if (currentPasswordController.text.isEmpty) {
                     Get.snackbar('Error', 'Please enter current password');
                     return;
@@ -212,7 +211,8 @@ class SettingsScreen extends StatelessWidget {
                   
                   setDialogState(() => isLoading = true);
                   
-                  // Simulate API call - In production, call the actual API
+                  // Note: In production, call AuthService.changePassword() here
+                  // For now, simulate API call
                   await Future.delayed(const Duration(seconds: 1));
                   
                   setDialogState(() => isLoading = false);
