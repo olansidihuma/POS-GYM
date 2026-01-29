@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['hold_name']) || empty(trim($input['hold_name']))) {
     echo json_encode([
         'success' => false,
         'message' => 'Hold name is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -39,7 +39,7 @@ if (!isset($input['transaction_data']) || !is_array($input['transaction_data']))
     echo json_encode([
         'success' => false,
         'message' => 'Transaction data is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -48,7 +48,7 @@ $conn = getConnection();
 
 // Prepare insert data
 $holdName = trim($input['hold_name']);
-$transactionData = json_encode($input['transaction_data']);
+$transactionData = json_encode($input['transaction_data'], JSON_NUMERIC_CHECK);
 $createdBy = $user['user_id'];
 
 // Insert held transaction
@@ -63,7 +63,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to hold transaction: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -79,7 +79,7 @@ echo json_encode([
         'id' => $heldId,
         'hold_name' => $holdName
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

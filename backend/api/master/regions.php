@@ -23,7 +23,7 @@ if (!in_array($type, ['kabupaten', 'kecamatan', 'kelurahan'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid type. Use: kabupaten, kecamatan, or kelurahan'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -42,7 +42,7 @@ if ($type === 'kabupaten') {
         echo json_encode([
             'success' => false,
             'message' => 'kabupaten_id is required for kecamatan'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -61,7 +61,7 @@ if ($type === 'kabupaten') {
         echo json_encode([
             'success' => false,
             'message' => 'kecamatan_id is required for kelurahan'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -77,7 +77,7 @@ if ($type === 'kabupaten') {
 echo json_encode([
     'success' => true,
     'data' => $data
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

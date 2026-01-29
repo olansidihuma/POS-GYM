@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -27,7 +27,7 @@ if (!isset($input['username']) || !isset($input['password'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Username and password are required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -50,7 +50,7 @@ if (!$user) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid username or password'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -61,7 +61,7 @@ if ($user['status'] !== 'active') {
     echo json_encode([
         'success' => false,
         'message' => 'Account is inactive'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -72,7 +72,7 @@ if (!password_verify($password, $user['password'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid username or password'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -93,7 +93,7 @@ echo json_encode([
             'role' => $user['role']
         ]
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

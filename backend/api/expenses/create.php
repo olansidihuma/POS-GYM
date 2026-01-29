@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -34,7 +34,7 @@ if (!isset($input['expense_type_id']) || empty($input['expense_type_id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Expense type is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -43,7 +43,7 @@ if (!isset($input['amount']) || $input['amount'] <= 0) {
     echo json_encode([
         'success' => false,
         'message' => 'Valid amount is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -52,7 +52,7 @@ if (!isset($input['expense_date']) || empty($input['expense_date'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Expense date is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -69,7 +69,7 @@ if (!$type) {
     echo json_encode([
         'success' => false,
         'message' => 'Expense type not found or inactive'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -92,7 +92,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to create expense: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -113,7 +113,7 @@ echo json_encode([
     'success' => true,
     'message' => 'Expense created successfully',
     'data' => $expense
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

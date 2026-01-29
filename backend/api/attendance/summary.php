@@ -24,7 +24,7 @@ if (!in_array($period, ['daily', 'monthly'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid period. Use daily or monthly'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -97,7 +97,7 @@ if ($period === 'daily') {
     $response['data']['daily_breakdown'] = $dailyBreakdown;
 }
 
-echo json_encode($response);
+echo json_encode($response, JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

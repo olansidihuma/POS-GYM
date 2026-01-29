@@ -21,7 +21,7 @@ function getConnection() {
         die(json_encode([
             'success' => false,
             'message' => 'Database connection failed. Please try again later.'
-        ]));
+        ], JSON_NUMERIC_CHECK));
     }
     
     $conn->set_charset('utf8mb4');

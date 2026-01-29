@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['attendance_type']) || empty($input['attendance_type'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Attendance type is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -41,7 +41,7 @@ if (!in_array($attendanceType, ['member', 'non_member'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid attendance type'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -59,7 +59,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Member ID is required for member attendance'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -75,7 +75,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Member not found'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -85,7 +85,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Member is inactive'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -100,7 +100,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Member does not have an active subscription'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -111,7 +111,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Payment method is required for non-member attendance'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -125,7 +125,7 @@ if ($attendanceType === 'member') {
         echo json_encode([
             'success' => false,
             'message' => 'Attendance fee not configured'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -150,7 +150,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to record attendance: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -171,7 +171,7 @@ echo json_encode([
     'success' => true,
     'message' => 'Attendance recorded successfully',
     'data' => $attendance
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

@@ -74,7 +74,7 @@ if (!$result['success']) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to fetch incomes'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -99,7 +99,7 @@ echo json_encode([
             'limit' => $limit
         ]
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

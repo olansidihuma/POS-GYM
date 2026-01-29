@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['member_id']) || empty($input['member_id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Member ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -39,7 +39,7 @@ if (!isset($input['membership_type_id']) || empty($input['membership_type_id']))
     echo json_encode([
         'success' => false,
         'message' => 'Membership type is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -48,7 +48,7 @@ if (!isset($input['payment_method']) || empty($input['payment_method'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Payment method is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -65,7 +65,7 @@ if (!$member) {
     echo json_encode([
         'success' => false,
         'message' => 'Member not found or inactive'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -80,7 +80,7 @@ if (!$type) {
     echo json_encode([
         'success' => false,
         'message' => 'Membership type not found or inactive'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -98,7 +98,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || !strtotime($start_date)
     echo json_encode([
         'success' => false,
         'message' => 'Invalid start_date format. Use YYYY-MM-DD'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -132,7 +132,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to create subscription: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -153,7 +153,7 @@ echo json_encode([
     'success' => true,
     'message' => 'Subscription created successfully',
     'data' => $subscription
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>
