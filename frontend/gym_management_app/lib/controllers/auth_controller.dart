@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -9,7 +10,6 @@ class AuthController extends GetxController {
   final Rx<User?> currentUser = Rx<User?>(null);
   final RxBool isLoading = false.obs;
   final RxBool isLoggedIn = false.obs;
-  final RxBool isInitialized = false.obs;
 
   @override
   void onInit() {
@@ -30,11 +30,11 @@ class AuthController extends GetxController {
         isLoggedIn.value = false;
       }
     } catch (e) {
+      debugPrint('AuthController.checkAuthStatus error: $e');
       currentUser.value = null;
       isLoggedIn.value = false;
     } finally {
       isLoading.value = false;
-      isInitialized.value = true;
     }
   }
 
