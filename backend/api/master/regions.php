@@ -1,8 +1,8 @@
 <?php
 /**
- * Regions API (Kabupaten, Kecamatan, Kelurahan)
+ * Regions API (Provinsi, Kabupaten, Kecamatan, Kelurahan)
  * Endpoint: GET /api/master/regions.php
- * Query Params: type (kabupaten, kecamatan, kelurahan), kabupaten_id, kecamatan_id
+ * Query Params: type (provinsi, kabupaten, kecamatan, kelurahan), provinsi_id, kabupaten_id, kecamatan_id
  */
 
 require_once '../../config/cors.php';
@@ -16,13 +16,13 @@ $user = authenticate();
 $conn = getConnection();
 
 // Get query parameters
-$type = isset($_GET['type']) ? $_GET['type'] : 'kabupaten';
+$type = isset($_GET['type']) ? $_GET['type'] : 'provinsi';
 
-if (!in_array($type, ['kabupaten', 'kecamatan', 'kelurahan'])) {
+if (!in_array($type, ['provinsi', 'kabupaten', 'kecamatan', 'kelurahan'])) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Invalid type. Use: kabupaten, kecamatan, or kelurahan'
+        'message' => 'Invalid type. Use: provinsi, kabupaten, kecamatan, or kelurahan'
     ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
@@ -30,10 +30,25 @@ if (!in_array($type, ['kabupaten', 'kecamatan', 'kelurahan'])) {
 
 $data = [];
 
-if ($type === 'kabupaten') {
-    // Get all kabupaten
-    $sql = "SELECT id, name FROM kabupaten WHERE status = 'active' ORDER BY name ASC";
+if ($type === 'provinsi') {
+    // Get all provinsi
+    $sql = "SELECT id, name FROM provinsi WHERE status = 'active' ORDER BY name ASC";
     $data = fetchAll($conn, $sql);
+
+} elseif ($type === 'kabupaten') {
+    // Get kabupaten by provinsi_id (optional - if not provided, get all)
+    if (isset($_GET['provinsi_id']) && !empty($_GET['provinsi_id'])) {
+        $provinsiId = intval($_GET['provinsi_id']);
+        $sql = "SELECT id, provinsi_id, name 
+                FROM kabupaten 
+                WHERE provinsi_id = ? AND status = 'active' 
+                ORDER BY name ASC";
+        $data = fetchAll($conn, $sql, [$provinsiId]);
+    } else {
+        // Get all kabupaten
+        $sql = "SELECT id, provinsi_id, name FROM kabupaten WHERE status = 'active' ORDER BY name ASC";
+        $data = fetchAll($conn, $sql);
+    }
 
 } elseif ($type === 'kecamatan') {
     // Get kecamatan by kabupaten_id

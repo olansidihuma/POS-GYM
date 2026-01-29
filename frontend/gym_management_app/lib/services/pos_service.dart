@@ -23,7 +23,7 @@ class PosService {
       };
 
       final response = await _apiService.get(
-        '${AppConstants.productsEndpoint}/list.php',
+        '/pos/products.php',
         queryParameters: queryParams,
       );
 
@@ -62,7 +62,7 @@ class PosService {
   Future<Map<String, dynamic>> getProductCategories() async {
     try {
       final response = await _apiService.get(
-        '${AppConstants.productsEndpoint}/categories.php',
+        '/pos/categories.php',
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
@@ -99,7 +99,7 @@ class PosService {
   Future<Map<String, dynamic>> createTransaction(Transaction transaction) async {
     try {
       final response = await _apiService.post(
-        '${AppConstants.transactionsEndpoint}/create.php',
+        '/pos/create_transaction.php',
         data: transaction.toJson(),
       );
 

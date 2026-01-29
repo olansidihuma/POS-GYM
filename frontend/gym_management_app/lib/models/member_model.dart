@@ -46,35 +46,44 @@ class Member {
   });
 
   factory Member.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedDateOfBirth;
+    try {
+      if (json['date_of_birth'] != null && json['date_of_birth'].toString().isNotEmpty) {
+        parsedDateOfBirth = DateTime.parse(json['date_of_birth'].toString());
+      }
+    } catch (_) {
+      parsedDateOfBirth = null;
+    }
+    
     return Member(
-      id: json['id'],
-      memberCode: json['member_code'] ?? '',
-      fullName: json['full_name'] ?? '',
-      gender: json['gender'] ?? '',
-      dateOfBirth: DateTime.parse(json['date_of_birth']),
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      address: json['address'] ?? '',
-      provinsi: json['provinsi'] ?? '',
-      kabupaten: json['kabupaten'] ?? '',
-      kecamatan: json['kecamatan'] ?? '',
-      kelurahan: json['kelurahan'] ?? '',
-      emergencyContact: json['emergency_contact'],
-      emergencyPhone: json['emergency_phone'],
-      photo: json['photo'],
-      qrCode: json['qr_code'],
-      isActive: json['is_active'] == 1 || json['is_active'] == true,
-      joinDate: json['join_date'] != null 
-          ? DateTime.parse(json['join_date']) 
+      id: json['id'] is int ? json['id'] : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
+      memberCode: json['member_code']?.toString() ?? '',
+      fullName: json['full_name']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? 'Male',
+      dateOfBirth: parsedDateOfBirth ?? DateTime.now().subtract(const Duration(days: 6570)),
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      provinsi: json['provinsi']?.toString() ?? '',
+      kabupaten: json['kabupaten']?.toString() ?? '',
+      kecamatan: json['kecamatan']?.toString() ?? '',
+      kelurahan: json['kelurahan']?.toString() ?? '',
+      emergencyContact: json['emergency_contact']?.toString(),
+      emergencyPhone: json['emergency_phone']?.toString(),
+      photo: json['photo']?.toString(),
+      qrCode: json['qr_code']?.toString(),
+      isActive: json['is_active'] == 1 || json['is_active'] == true || json['is_active'] == 'active',
+      joinDate: json['join_date'] != null && json['join_date'].toString().isNotEmpty
+          ? DateTime.tryParse(json['join_date'].toString()) 
           : null,
-      membershipExpiry: json['membership_expiry'] != null 
-          ? DateTime.parse(json['membership_expiry']) 
+      membershipExpiry: json['membership_expiry'] != null && json['membership_expiry'].toString().isNotEmpty
+          ? DateTime.tryParse(json['membership_expiry'].toString()) 
           : null,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      createdAt: json['created_at'] != null && json['created_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['created_at'].toString()) 
           : null,
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
+      updatedAt: json['updated_at'] != null && json['updated_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['updated_at'].toString()) 
           : null,
     );
   }

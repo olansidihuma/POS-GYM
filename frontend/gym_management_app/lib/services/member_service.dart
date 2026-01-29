@@ -197,17 +197,37 @@ class MemberService {
     }
   }
 
-  Future<Map<String, dynamic>> getKabupaten(String provinsiId) async {
+  Future<Map<String, dynamic>> getProvinsi() async {
     try {
       final response = await _apiService.get(
-        '${AppConstants.masterDataEndpoint}/kabupaten.php',
-        queryParameters: {'provinsi_id': provinsiId},
+        '${AppConstants.regionsEndpoint}',
+        queryParameters: {'type': 'provinsi'},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         return {
           'success': true,
-          'data': response.data['data'],
+          'data': response.data['data'] ?? [],
+        };
+      }
+
+      return {'success': false, 'data': []};
+    } catch (e) {
+      return {'success': false, 'data': []};
+    }
+  }
+
+  Future<Map<String, dynamic>> getKabupaten(String provinsiId) async {
+    try {
+      final response = await _apiService.get(
+        '${AppConstants.regionsEndpoint}',
+        queryParameters: {'type': 'kabupaten', 'provinsi_id': provinsiId},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'data': response.data['data'] ?? [],
         };
       }
 
@@ -220,14 +240,14 @@ class MemberService {
   Future<Map<String, dynamic>> getKecamatan(String kabupatenId) async {
     try {
       final response = await _apiService.get(
-        '${AppConstants.masterDataEndpoint}/kecamatan.php',
-        queryParameters: {'kabupaten_id': kabupatenId},
+        '${AppConstants.regionsEndpoint}',
+        queryParameters: {'type': 'kecamatan', 'kabupaten_id': kabupatenId},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         return {
           'success': true,
-          'data': response.data['data'],
+          'data': response.data['data'] ?? [],
         };
       }
 
@@ -240,14 +260,14 @@ class MemberService {
   Future<Map<String, dynamic>> getKelurahan(String kecamatanId) async {
     try {
       final response = await _apiService.get(
-        '${AppConstants.masterDataEndpoint}/kelurahan.php',
-        queryParameters: {'kecamatan_id': kecamatanId},
+        '${AppConstants.regionsEndpoint}',
+        queryParameters: {'type': 'kelurahan', 'kecamatan_id': kecamatanId},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         return {
           'success': true,
-          'data': response.data['data'],
+          'data': response.data['data'] ?? [],
         };
       }
 

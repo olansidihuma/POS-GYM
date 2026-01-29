@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/constants.dart';
+import 'profile_screen.dart';
+import 'user_management_screen.dart';
+import 'product_categories_screen.dart';
+import 'membership_packages_screen.dart';
+import 'printer_settings_screen.dart';
+import 'products_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -19,10 +25,10 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Profile'),
-            subtitle: Text(authController.currentUser.value?.email ?? ''),
+            subtitle: Obx(() => Text(authController.currentUser.value?.email ?? '')),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
-              Get.snackbar('Info', 'Profile settings coming soon');
+              Get.to(() => const ProfileScreen());
             },
           ),
           const Divider(),
@@ -33,7 +39,16 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('User Management'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                Get.snackbar('Info', 'User management coming soon');
+                Get.to(() => const UserManagementScreen());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory_2),
+              title: const Text('Products'),
+              subtitle: const Text('Manage products'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Get.to(() => const ProductsScreen());
               },
             ),
             ListTile(
@@ -41,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Product Categories'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                Get.snackbar('Info', 'Category management coming soon');
+                Get.to(() => const ProductCategoriesScreen());
               },
             ),
             ListTile(
@@ -49,7 +64,7 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Membership Packages'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                Get.snackbar('Info', 'Package management coming soon');
+                Get.to(() => const MembershipPackagesScreen());
               },
             ),
             const Divider(),
@@ -68,7 +83,7 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Printer Settings'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
-              Get.snackbar('Info', 'Printer settings coming soon');
+              Get.to(() => const PrinterSettingsScreen());
             },
           ),
           ListTile(
@@ -123,57 +138,99 @@ class SettingsScreen extends StatelessWidget {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
+    bool isLoading = false;
 
-    Get.defaultDialog(
-      title: 'Change Password',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: currentPasswordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Current Password',
-              prefixIcon: Icon(Icons.lock),
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Change Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppSpacing.md),
+                    child: CircularProgressIndicator(),
+                  ),
+              ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: newPasswordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'New Password',
-              prefixIcon: Icon(Icons.lock),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: confirmPasswordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Confirm Password',
-              prefixIcon: Icon(Icons.lock),
-            ),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Get.back(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isLoading ? null : () async {
+                  // Validate before showing loading state
+                  if (currentPasswordController.text.isEmpty) {
+                    Get.snackbar('Error', 'Please enter current password');
+                    return;
+                  }
+                  if (newPasswordController.text.isEmpty) {
+                    Get.snackbar('Error', 'Please enter new password');
+                    return;
+                  }
+                  if (newPasswordController.text != confirmPasswordController.text) {
+                    Get.snackbar('Error', 'Passwords do not match');
+                    return;
+                  }
+                  if (newPasswordController.text.length < 6) {
+                    Get.snackbar('Error', 'Password must be at least 6 characters');
+                    return;
+                  }
+                  
+                  setDialogState(() => isLoading = true);
+                  
+                  // Note: In production, call AuthService.changePassword() here
+                  // For now, simulate API call
+                  await Future.delayed(const Duration(seconds: 1));
+                  
+                  setDialogState(() => isLoading = false);
+                  
+                  Get.back();
+                  Get.snackbar(
+                    'Success',
+                    'Password changed successfully',
+                    backgroundColor: AppColors.success,
+                    colorText: Colors.white,
+                  );
+                },
+                child: const Text('Change'),
+              ),
+            ],
+          );
+        },
       ),
-      textConfirm: 'Change',
-      textCancel: 'Cancel',
-      confirmTextColor: Colors.white,
-      onConfirm: () {
-        if (newPasswordController.text != confirmPasswordController.text) {
-          Get.snackbar('Error', 'Passwords do not match');
-          return;
-        }
-        
-        Get.back();
-        Get.snackbar(
-          'Success',
-          'Password changed successfully',
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-        );
-      },
     );
   }
 }

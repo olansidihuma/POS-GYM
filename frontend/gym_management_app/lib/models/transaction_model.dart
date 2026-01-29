@@ -40,34 +40,39 @@ class Transaction {
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedDate;
+    try {
+      if (json['transaction_date'] != null && json['transaction_date'].toString().isNotEmpty) {
+        parsedDate = DateTime.parse(json['transaction_date'].toString());
+      }
+    } catch (_) {
+      parsedDate = null;
+    }
+    
     return Transaction(
-      id: json['id'],
-      transactionNumber: json['transaction_number'] ?? '',
-      type: json['type'] ?? '',
-      transactionDate: DateTime.parse(json['transaction_date']),
-      memberId: json['member_id'],
-      memberName: json['member_name'],
-      subtotal: double.parse(json['subtotal'].toString()),
-      discount: json['discount'] != null 
-          ? double.parse(json['discount'].toString()) 
-          : 0,
-      tax: json['tax'] != null ? double.parse(json['tax'].toString()) : 0,
-      total: double.parse(json['total'].toString()),
-      paymentMethod: json['payment_method'] ?? '',
-      paidAmount: double.parse(json['paid_amount'].toString()),
-      changeAmount: json['change_amount'] != null 
-          ? double.parse(json['change_amount'].toString()) 
-          : 0,
-      notes: json['notes'],
+      id: json['id'] is int ? json['id'] : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
+      transactionNumber: json['transaction_number']?.toString() ?? json['transaction_code']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      transactionDate: parsedDate ?? DateTime.now(),
+      memberId: json['member_id'] is int ? json['member_id'] : (json['member_id'] != null ? int.tryParse(json['member_id'].toString()) : null),
+      memberName: json['member_name']?.toString(),
+      subtotal: json['subtotal'] != null ? double.tryParse(json['subtotal'].toString()) ?? 0.0 : 0.0,
+      discount: json['discount'] != null ? double.tryParse(json['discount'].toString()) ?? 0.0 : 0.0,
+      tax: json['tax'] != null ? double.tryParse(json['tax'].toString()) ?? 0.0 : 0.0,
+      total: json['total'] != null ? double.tryParse(json['total'].toString()) ?? 0.0 : (json['total_amount'] != null ? double.tryParse(json['total_amount'].toString()) ?? 0.0 : 0.0),
+      paymentMethod: json['payment_method']?.toString() ?? '',
+      paidAmount: json['paid_amount'] != null ? double.tryParse(json['paid_amount'].toString()) ?? 0.0 : (json['payment_amount'] != null ? double.tryParse(json['payment_amount'].toString()) ?? 0.0 : 0.0),
+      changeAmount: json['change_amount'] != null ? double.tryParse(json['change_amount'].toString()) ?? 0.0 : 0.0,
+      notes: json['notes']?.toString(),
       items: json['items'] != null
           ? (json['items'] as List)
               .map((item) => TransactionItem.fromJson(item))
               .toList()
           : null,
-      createdBy: json['created_by'],
-      createdByName: json['created_by_name'],
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      createdBy: json['created_by'] is int ? json['created_by'] : (json['created_by'] != null ? int.tryParse(json['created_by'].toString()) : null),
+      createdByName: json['created_by_name']?.toString(),
+      createdAt: json['created_at'] != null && json['created_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['created_at'].toString()) 
           : null,
     );
   }
@@ -119,17 +124,15 @@ class TransactionItem {
 
   factory TransactionItem.fromJson(Map<String, dynamic> json) {
     return TransactionItem(
-      id: json['id'],
-      transactionId: json['transaction_id'],
-      productId: json['product_id'],
-      productName: json['product_name'] ?? '',
-      price: double.parse(json['price'].toString()),
-      quantity: json['quantity'],
-      subtotal: double.parse(json['subtotal'].toString()),
-      discount: json['discount'] != null 
-          ? double.parse(json['discount'].toString()) 
-          : 0,
-      total: double.parse(json['total'].toString()),
+      id: json['id'] is int ? json['id'] : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
+      transactionId: json['transaction_id'] is int ? json['transaction_id'] : (json['transaction_id'] != null ? int.tryParse(json['transaction_id'].toString()) : null),
+      productId: json['product_id'] is int ? json['product_id'] : (json['product_id'] != null ? int.tryParse(json['product_id'].toString()) ?? 0 : 0),
+      productName: json['product_name']?.toString() ?? '',
+      price: json['price'] != null ? double.tryParse(json['price'].toString()) ?? 0.0 : 0.0,
+      quantity: json['quantity'] is int ? json['quantity'] : (json['quantity'] != null ? int.tryParse(json['quantity'].toString()) ?? 0 : 0),
+      subtotal: json['subtotal'] != null ? double.tryParse(json['subtotal'].toString()) ?? 0.0 : 0.0,
+      discount: json['discount'] != null ? double.tryParse(json['discount'].toString()) ?? 0.0 : 0.0,
+      total: json['total'] != null ? double.tryParse(json['total'].toString()) ?? 0.0 : 0.0,
     );
   }
 
@@ -176,19 +179,28 @@ class Expense {
   });
 
   factory Expense.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedDate;
+    try {
+      if (json['expense_date'] != null && json['expense_date'].toString().isNotEmpty) {
+        parsedDate = DateTime.parse(json['expense_date'].toString());
+      }
+    } catch (_) {
+      parsedDate = null;
+    }
+    
     return Expense(
-      id: json['id'],
-      expenseNumber: json['expense_number'] ?? '',
-      category: json['category'] ?? '',
-      description: json['description'] ?? '',
-      amount: double.parse(json['amount'].toString()),
-      expenseDate: DateTime.parse(json['expense_date']),
-      receipt: json['receipt'],
-      notes: json['notes'],
-      createdBy: json['created_by'],
-      createdByName: json['created_by_name'],
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      id: json['id'] is int ? json['id'] : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
+      expenseNumber: json['expense_number']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      amount: json['amount'] != null ? double.tryParse(json['amount'].toString()) ?? 0.0 : 0.0,
+      expenseDate: parsedDate ?? DateTime.now(),
+      receipt: json['receipt']?.toString(),
+      notes: json['notes']?.toString(),
+      createdBy: json['created_by'] is int ? json['created_by'] : (json['created_by'] != null ? int.tryParse(json['created_by'].toString()) : null),
+      createdByName: json['created_by_name']?.toString(),
+      createdAt: json['created_at'] != null && json['created_at'].toString().isNotEmpty
+          ? DateTime.tryParse(json['created_at'].toString()) 
           : null,
     );
   }
