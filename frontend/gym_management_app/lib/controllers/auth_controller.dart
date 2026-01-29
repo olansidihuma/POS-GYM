@@ -9,27 +9,32 @@ class AuthController extends GetxController {
   final Rx<User?> currentUser = Rx<User?>(null);
   final RxBool isLoading = false.obs;
   final RxBool isLoggedIn = false.obs;
+  final RxBool isInitialized = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    checkAuthStatus();
+    // Note: checkAuthStatus() is called explicitly from main.dart before runApp()
+    // to ensure auth state is fully loaded before the app renders
   }
 
   Future<void> checkAuthStatus() async {
     isLoading.value = true;
     try {
       final authData = await _authService.getAuthData();
-      if (authData != null) {
+      if (authData != null && authData['user'] != null) {
         currentUser.value = authData['user'];
         isLoggedIn.value = true;
       } else {
+        currentUser.value = null;
         isLoggedIn.value = false;
       }
     } catch (e) {
+      currentUser.value = null;
       isLoggedIn.value = false;
     } finally {
       isLoading.value = false;
+      isInitialized.value = true;
     }
   }
 
