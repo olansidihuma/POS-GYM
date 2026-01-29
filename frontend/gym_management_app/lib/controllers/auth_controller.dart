@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -13,20 +14,24 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkAuthStatus();
+    // Note: checkAuthStatus() is called explicitly from main.dart before runApp()
+    // to ensure auth state is fully loaded before the app renders
   }
 
   Future<void> checkAuthStatus() async {
     isLoading.value = true;
     try {
       final authData = await _authService.getAuthData();
-      if (authData != null) {
+      if (authData != null && authData['user'] != null) {
         currentUser.value = authData['user'];
         isLoggedIn.value = true;
       } else {
+        currentUser.value = null;
         isLoggedIn.value = false;
       }
     } catch (e) {
+      debugPrint('AuthController.checkAuthStatus error: $e');
+      currentUser.value = null;
       isLoggedIn.value = false;
     } finally {
       isLoading.value = false;

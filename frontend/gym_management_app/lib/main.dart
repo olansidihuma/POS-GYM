@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'routes/app_routes.dart';
 import 'controllers/auth_controller.dart';
 import 'utils/constants.dart';
@@ -8,14 +7,14 @@ import 'utils/constants.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
+  // Initialize AuthController and wait for auth status check to complete
+  final authController = Get.put(AuthController());
+  await authController.checkAuthStatus();
   
-  // Initialize AuthController
-  Get.put(AuthController());
+  // Determine initial route based on login status
+  final initialRoute = authController.isLoggedIn.value ? AppRoutes.home : AppRoutes.login;
   
-  runApp(MyApp(initialRoute: token != null ? AppRoutes.home : AppRoutes.login));
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
