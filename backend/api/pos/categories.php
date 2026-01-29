@@ -25,7 +25,7 @@ $categories = fetchAll($conn, $sql);
 echo json_encode([
     'success' => true,
     'data' => $categories
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

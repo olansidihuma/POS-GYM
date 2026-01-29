@@ -29,7 +29,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || !strtotime($dateFrom)) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid date_from format. Use YYYY-MM-DD'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -39,7 +39,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) || !strtotime($dateTo)) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid date_to format. Use YYYY-MM-DD'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -50,7 +50,7 @@ if (strtotime($dateFrom) > strtotime($dateTo)) {
     echo json_encode([
         'success' => false,
         'message' => 'Invalid date range'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -192,7 +192,7 @@ echo json_encode([
         ],
         'top_products' => $topProducts
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

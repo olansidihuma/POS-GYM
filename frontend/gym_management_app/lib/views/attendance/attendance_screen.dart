@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../../controllers/attendance_controller.dart';
 import '../../widgets/loading_widget.dart';
 import '../../utils/constants.dart';
 import 'package:intl/intl.dart';
 
+/// Attendance screen with USB barcode/QR scanner support.
+/// USB scanners act as keyboard input devices (keyboard wedge mode),
+/// so we use a TextField to capture scanned data.
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
 
@@ -14,31 +16,57 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? qrController;
-  bool isScanning = false;
+  final TextEditingController _scannerController = TextEditingController();
+  final FocusNode _scannerFocusNode = FocusNode();
+  bool _isProcessing = false;
+  String _lastScannedCode = '';
+  DateTime? _lastScanTime;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-focus the scanner input field
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scannerFocusNode.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
-    qrController?.dispose();
+    _scannerController.dispose();
+    _scannerFocusNode.dispose();
     super.dispose();
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    qrController = controller;
-    controller.scannedDataStream.listen((scanData) async {
-      if (!isScanning) {
-        isScanning = true;
-        qrController?.pauseCamera();
-        
-        final attendanceController = Get.find<AttendanceController>();
-        await attendanceController.scanQrCode(scanData.code ?? '');
-        
-        await Future.delayed(const Duration(seconds: 2));
-        qrController?.resumeCamera();
-        isScanning = false;
-      }
+  /// Process scanned QR/barcode data from USB scanner
+  Future<void> _processScannedCode(String code) async {
+    if (code.isEmpty || _isProcessing) return;
+    
+    // Prevent duplicate scans within 2 seconds
+    final now = DateTime.now();
+    if (_lastScannedCode == code && 
+        _lastScanTime != null && 
+        now.difference(_lastScanTime!).inSeconds < 2) {
+      _scannerController.clear();
+      return;
+    }
+    
+    setState(() {
+      _isProcessing = true;
+      _lastScannedCode = code;
+      _lastScanTime = now;
     });
+    
+    try {
+      final attendanceController = Get.find<AttendanceController>();
+      await attendanceController.scanQrCode(code);
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+      _scannerController.clear();
+      _scannerFocusNode.requestFocus();
+    }
   }
 
   @override
@@ -67,20 +95,88 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       body: Column(
         children: [
-          // QR Scanner
+          // USB Scanner Input Section
           Container(
-            height: 250,
-            color: Colors.black,
-            child: QRView(
-              key: qrKey,
-              onQRViewCreated: _onQRViewCreated,
-              overlay: QrScannerOverlayShape(
-                borderColor: AppColors.primary,
-                borderRadius: 10,
-                borderLength: 30,
-                borderWidth: 10,
-                cutOutSize: 200,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withOpacity(0.8),
+                ],
               ),
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.qr_code_scanner,
+                  size: 64,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  _isProcessing ? 'Processing...' : 'Ready to Scan',
+                  style: AppTextStyles.heading3.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Use USB barcode/QR scanner to check-in members',
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                // Hidden text field for capturing USB scanner input
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                  ),
+                  child: TextField(
+                    controller: _scannerController,
+                    focusNode: _scannerFocusNode,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Scan QR code or type member code...',
+                      prefixIcon: Icon(
+                        Icons.qr_code,
+                        color: _isProcessing ? AppColors.warning : AppColors.primary,
+                      ),
+                      suffixIcon: _isProcessing
+                          ? const Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: () => _processScannedCode(_scannerController.text.trim()),
+                            ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    enabled: !_isProcessing,
+                    onSubmitted: (value) => _processScannedCode(value.trim()),
+                    // USB scanners typically send Enter after the scan
+                    textInputAction: TextInputAction.done,
+                  ),
+                ),
+                if (_lastScannedCode.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Last scan: $_lastScannedCode',
+                    style: AppTextStyles.bodySmall.copyWith(color: Colors.white54),
+                  ),
+                ],
+              ],
             ),
           ),
           

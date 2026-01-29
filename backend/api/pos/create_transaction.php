@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['items']) || !is_array($input['items']) || empty($input['items
     echo json_encode([
         'success' => false,
         'message' => 'Transaction items are required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -39,7 +39,7 @@ if (!isset($input['payment_method']) || empty($input['payment_method'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Payment method is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -48,7 +48,7 @@ if (!isset($input['payment_amount']) || $input['payment_amount'] <= 0) {
     echo json_encode([
         'success' => false,
         'message' => 'Payment amount is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -215,7 +215,7 @@ try {
         'success' => true,
         'message' => 'Transaction created successfully',
         'data' => $transaction
-    ]);
+    ], JSON_NUMERIC_CHECK);
 
 } catch (Exception $e) {
     $conn->rollback();
@@ -223,7 +223,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
-    ]);
+    ], JSON_NUMERIC_CHECK);
 }
 
 closeConnection($conn);

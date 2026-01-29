@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['id']) || empty($input['id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Member ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -47,7 +47,7 @@ if (!$existingMember) {
     echo json_encode([
         'success' => false,
         'message' => 'Member not found'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -62,7 +62,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to delete member: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -73,7 +73,7 @@ $stmt->close();
 echo json_encode([
     'success' => true,
     'message' => 'Member deleted successfully'
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

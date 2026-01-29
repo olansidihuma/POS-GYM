@@ -17,7 +17,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Member ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -41,7 +41,7 @@ if (!$member) {
     echo json_encode([
         'success' => false,
         'message' => 'Member not found'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -65,7 +65,7 @@ $member['total_visits'] = $visitCount ? intval($visitCount['total_visits']) : 0;
 echo json_encode([
     'success' => true,
     'data' => $member
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

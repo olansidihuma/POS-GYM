@@ -19,9 +19,9 @@ dependencies:
   # Local Storage
   shared_preferences: ^2.2.2
   
-  # QR Code
+  # QR Code Generation (for member cards)
   qr_flutter: ^4.1.0
-  qr_code_scanner: ^1.0.1
+  # Note: QR scanning uses USB scanner input (keyboard wedge mode) instead of camera
   
   # Image Picker
   image_picker: ^1.0.7

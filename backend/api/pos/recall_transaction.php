@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['id']) || empty($input['id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Held transaction ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -48,7 +48,7 @@ if (!$heldTransaction) {
     echo json_encode([
         'success' => false,
         'message' => 'Held transaction not found'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -63,7 +63,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to recall transaction: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -81,7 +81,7 @@ echo json_encode([
         'hold_name' => $heldTransaction['hold_name'],
         'transaction_data' => $transactionData
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode([
         'success' => true,
         'data' => $settingsObj
-    ]);
+    ], JSON_NUMERIC_CHECK);
 
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Update settings (Admin only)
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode([
             'success' => false,
             'message' => 'Settings array is required'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         closeConnection($conn);
         exit();
     }
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'success' => true,
             'message' => 'Settings updated successfully',
             'data' => $settingsObj
-        ]);
+        ], JSON_NUMERIC_CHECK);
 
     } catch (Exception $e) {
         $conn->rollback();
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode([
             'success' => false,
             'message' => $e->getMessage()
-        ]);
+        ], JSON_NUMERIC_CHECK);
     }
 
 } else {
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
 }
 
 closeConnection($conn);

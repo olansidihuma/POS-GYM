@@ -50,7 +50,7 @@ $products = fetchAll($conn, $sql, $params);
 echo json_encode([
     'success' => true,
     'data' => $products
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

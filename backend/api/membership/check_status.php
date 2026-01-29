@@ -17,7 +17,7 @@ if (!isset($_GET['member_id']) || empty($_GET['member_id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Member ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -35,7 +35,7 @@ if (!$member) {
     echo json_encode([
         'success' => false,
         'message' => 'Member not found'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -72,7 +72,7 @@ echo json_encode([
         'status' => $status,
         'subscription' => $subscription
     ]
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

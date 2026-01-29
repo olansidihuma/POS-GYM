@@ -25,7 +25,7 @@ $heldTransactions = fetchAll($conn, $sql);
 echo json_encode([
     'success' => true,
     'data' => $heldTransactions
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>

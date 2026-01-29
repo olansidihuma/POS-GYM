@@ -100,7 +100,7 @@ function authenticate() {
         echo json_encode([
             'success' => false,
             'message' => 'Unauthorized: Token not provided'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         exit();
     }
     
@@ -111,7 +111,7 @@ function authenticate() {
         echo json_encode([
             'success' => false,
             'message' => 'Unauthorized: Invalid or expired token'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         exit();
     }
     
@@ -125,7 +125,7 @@ function requireAdmin($user) {
         echo json_encode([
             'success' => false,
             'message' => 'Forbidden: Admin access required'
-        ]);
+        ], JSON_NUMERIC_CHECK);
         exit();
     }
 }

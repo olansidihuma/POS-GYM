@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     echo json_encode([
         'success' => false,
         'message' => 'Method not allowed'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -30,7 +30,7 @@ if (!isset($input['id']) || empty($input['id'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Member ID is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -39,7 +39,7 @@ if (!isset($input['full_name']) || empty(trim($input['full_name']))) {
     echo json_encode([
         'success' => false,
         'message' => 'Full name is required'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     exit();
 }
 
@@ -56,7 +56,7 @@ if (!$existingMember) {
     echo json_encode([
         'success' => false,
         'message' => 'Member not found'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -80,7 +80,7 @@ if ($birth_date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth_date) |
     echo json_encode([
         'success' => false,
         'message' => 'Invalid birth_date format. Use YYYY-MM-DD'
-    ]);
+    ], JSON_NUMERIC_CHECK);
     closeConnection($conn);
     exit();
 }
@@ -106,7 +106,7 @@ if (!$stmt->execute()) {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to update member: ' . $stmt->error
-    ]);
+    ], JSON_NUMERIC_CHECK);
     $stmt->close();
     closeConnection($conn);
     exit();
@@ -127,7 +127,7 @@ echo json_encode([
     'success' => true,
     'message' => 'Member updated successfully',
     'data' => $member
-]);
+], JSON_NUMERIC_CHECK);
 
 closeConnection($conn);
 ?>
