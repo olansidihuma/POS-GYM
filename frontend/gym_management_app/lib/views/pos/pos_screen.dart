@@ -480,13 +480,12 @@ class PosScreen extends StatelessWidget {
     XFile? paymentProofImage;
     String? paymentProofBase64;
     bool isProcessing = false;
-    Transaction? completedTransaction;
 
     Get.dialog(
       StatefulBuilder(
         builder: (context, setDialogState) {
-          final showProofUpload = selectedPaymentMethod != 'Cash';
-          final isCash = selectedPaymentMethod == 'Cash';
+          final isCash = PrinterService.isCashPayment(selectedPaymentMethod);
+          final showProofUpload = !isCash;
           final paidAmount = double.tryParse(paidController.text) ?? 0;
           final changeAmount = paidAmount - controller.total.value;
           
@@ -509,7 +508,7 @@ class PosScreen extends StatelessWidget {
                 });
               }
             } catch (e) {
-              Get.snackbar('Error', 'Gagal mengambil foto: $e');
+              Get.snackbar('Error', 'Gagal mengambil foto. Silakan coba lagi.');
             }
           }
           
@@ -532,7 +531,7 @@ class PosScreen extends StatelessWidget {
                 });
               }
             } catch (e) {
-              Get.snackbar('Error', 'Gagal memilih foto: $e');
+              Get.snackbar('Error', 'Gagal memilih foto. Silakan coba lagi.');
             }
           }
           
@@ -766,6 +765,13 @@ class PosScreen extends StatelessWidget {
                     return;
                   }
                   
+                  // Store values before processing (cart will be cleared on success)
+                  final totalAmount = controller.total.value;
+                  final subtotalAmount = controller.subtotal.value;
+                  final discountAmount = controller.discount.value;
+                  final taxAmount = controller.tax.value;
+                  final cartItemsCopy = controller.cartItems.toList();
+                  
                   setDialogState(() => isProcessing = true);
                   
                   try {
@@ -778,28 +784,28 @@ class PosScreen extends StatelessWidget {
                     if (success) {
                       Get.back();
                       
-                      // Build transaction for receipt
-                      final changeAmt = paidAmount - controller.total.value;
-                      completedTransaction = Transaction(
+                      // Build transaction for receipt using stored values
+                      final changeAmt = paidAmount - totalAmount;
+                      final receiptTransaction = Transaction(
                         transactionNumber: 'TRX-${DateTime.now().millisecondsSinceEpoch}',
                         type: 'sale',
                         transactionDate: DateTime.now(),
-                        subtotal: controller.subtotal.value,
-                        discount: controller.discount.value,
-                        tax: controller.tax.value,
-                        total: controller.total.value,
+                        subtotal: subtotalAmount,
+                        discount: discountAmount,
+                        tax: taxAmount,
+                        total: totalAmount,
                         paymentMethod: selectedPaymentMethod,
                         paidAmount: paidAmount,
                         changeAmount: changeAmt > 0 ? changeAmt : 0,
-                        items: controller.cartItems.toList(),
+                        items: cartItemsCopy,
                       );
                       
                       // Show success dialog with change amount and print option
                       _showPaymentSuccessDialog(
                         selectedPaymentMethod,
                         paidAmount,
-                        controller.total.value,
-                        completedTransaction!,
+                        totalAmount,
+                        receiptTransaction,
                       );
                     }
                   } finally {
@@ -822,7 +828,7 @@ class PosScreen extends StatelessWidget {
     Transaction transaction,
   ) {
     final changeAmount = paidAmount - totalAmount;
-    final isCash = paymentMethod == 'Cash';
+    final isCash = PrinterService.isCashPayment(paymentMethod);
     final printerService = PrinterService();
     
     Get.dialog(

@@ -91,6 +91,12 @@ build/
 *.db
 
 # Uploads - ignore uploaded files but keep directory structure
-backend/uploads/**/*
+backend/uploads/*/
+!backend/uploads/
+!backend/uploads/*/
+backend/uploads/**/*.jpg
+backend/uploads/**/*.jpeg
+backend/uploads/**/*.png
+backend/uploads/**/*.gif
 !backend/uploads/.gitkeep
 !backend/uploads/**/.gitkeep

@@ -13,25 +13,31 @@ class PrinterService {
   
   BluetoothDevice? _connectedDevice;
   bool _isConnected = false;
+  String? _lastError;
 
   bool get isConnected => _isConnected;
   BluetoothDevice? get connectedDevice => _connectedDevice;
+  String? get lastError => _lastError;
 
   Future<List<BluetoothDevice>> scanDevices() async {
     try {
+      _lastError = null;
       return await bluetooth.getBondedDevices();
     } catch (e) {
+      _lastError = 'Gagal memindai perangkat: $e';
       return [];
     }
   }
 
   Future<bool> connect(BluetoothDevice device) async {
     try {
+      _lastError = null;
       await bluetooth.connect(device);
       _connectedDevice = device;
       _isConnected = true;
       return true;
     } catch (e) {
+      _lastError = 'Gagal menghubungkan printer: $e';
       _isConnected = false;
       return false;
     }
@@ -39,20 +45,29 @@ class PrinterService {
 
   Future<void> disconnect() async {
     try {
+      _lastError = null;
       await bluetooth.disconnect();
       _connectedDevice = null;
       _isConnected = false;
     } catch (e) {
-      // Handle error
+      _lastError = 'Gagal memutuskan koneksi: $e';
     }
+  }
+
+  /// Check if payment method is cash (case-insensitive)
+  static bool isCashPayment(String paymentMethod) {
+    return paymentMethod.toLowerCase() == 'cash';
   }
 
   Future<bool> printReceipt(Transaction transaction) async {
     if (!_isConnected) {
+      _lastError = 'Printer tidak terhubung';
       return false;
     }
 
     try {
+      _lastError = null;
+      
       // Get shop settings
       String shopName = 'Gym Management';
       String shopAddress = '';
@@ -122,7 +137,7 @@ class PrinterService {
 
       // Payment info
       bluetooth.printLeftRight('Bayar:', currencyFormat.format(transaction.paidAmount), 0);
-      if (transaction.paymentMethod.toLowerCase() == 'cash') {
+      if (isCashPayment(transaction.paymentMethod)) {
         bluetooth.printLeftRight('Kembalian:', currencyFormat.format(transaction.changeAmount), 1);
       }
 
@@ -134,73 +149,8 @@ class PrinterService {
 
       return true;
     } catch (e) {
+      _lastError = 'Gagal mencetak: $e';
       return false;
     }
-  }
-
-  String generateReceiptText(Transaction transaction, {
-    String shopName = 'Gym Management',
-    String shopAddress = '',
-    String shopPhone = '',
-    String footerText = 'Terima kasih!',
-  }) {
-    final buffer = StringBuffer();
-    final currencyFormat = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-    const width = 32;
-
-    String center(String text) {
-      if (text.length >= width) return text;
-      final padding = (width - text.length) ~/ 2;
-      return ' ' * padding + text;
-    }
-
-    String leftRight(String left, String right) {
-      final spaces = width - left.length - right.length;
-      if (spaces < 1) return '$left $right';
-      return left + ' ' * spaces + right;
-    }
-
-    buffer.writeln(center(shopName));
-    if (shopAddress.isNotEmpty) buffer.writeln(center(shopAddress));
-    if (shopPhone.isNotEmpty) buffer.writeln(center(shopPhone));
-    buffer.writeln('=' * width);
-    buffer.writeln(leftRight('No:', transaction.transactionNumber));
-    buffer.writeln(leftRight('Tanggal:', dateFormat.format(transaction.transactionDate)));
-    buffer.writeln(leftRight('Metode:', transaction.paymentMethod));
-    buffer.writeln('-' * width);
-
-    if (transaction.items != null) {
-      for (var item in transaction.items!) {
-        buffer.writeln(item.productName);
-        buffer.writeln(leftRight(
-          '  ${item.quantity} x ${currencyFormat.format(item.price)}',
-          currencyFormat.format(item.subtotal),
-        ));
-      }
-    }
-    buffer.writeln('-' * width);
-    buffer.writeln(leftRight('Subtotal:', currencyFormat.format(transaction.subtotal)));
-    if (transaction.discount > 0) {
-      buffer.writeln(leftRight('Diskon:', '-${currencyFormat.format(transaction.discount)}'));
-    }
-    if (transaction.tax > 0) {
-      buffer.writeln(leftRight('Pajak:', currencyFormat.format(transaction.tax)));
-    }
-    buffer.writeln('=' * width);
-    buffer.writeln(leftRight('TOTAL:', currencyFormat.format(transaction.total)));
-    buffer.writeln('=' * width);
-    buffer.writeln(leftRight('Bayar:', currencyFormat.format(transaction.paidAmount)));
-    if (transaction.paymentMethod.toLowerCase() == 'cash') {
-      buffer.writeln(leftRight('Kembalian:', currencyFormat.format(transaction.changeAmount)));
-    }
-    buffer.writeln();
-    buffer.writeln(center(footerText));
-
-    return buffer.toString();
   }
 }
