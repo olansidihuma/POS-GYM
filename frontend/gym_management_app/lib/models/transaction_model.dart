@@ -13,6 +13,7 @@ class Transaction {
   final double paidAmount;
   final double changeAmount;
   final String? notes;
+  final String? paymentProof;
   final List<TransactionItem>? items;
   final int? createdBy;
   final String? createdByName;
@@ -33,6 +34,7 @@ class Transaction {
     required this.paidAmount,
     this.changeAmount = 0,
     this.notes,
+    this.paymentProof,
     this.items,
     this.createdBy,
     this.createdByName,
@@ -57,13 +59,14 @@ class Transaction {
       memberId: json['member_id'] is int ? json['member_id'] : (json['member_id'] != null ? int.tryParse(json['member_id'].toString()) : null),
       memberName: json['member_name']?.toString(),
       subtotal: json['subtotal'] != null ? double.tryParse(json['subtotal'].toString()) ?? 0.0 : 0.0,
-      discount: json['discount'] != null ? double.tryParse(json['discount'].toString()) ?? 0.0 : 0.0,
-      tax: json['tax'] != null ? double.tryParse(json['tax'].toString()) ?? 0.0 : 0.0,
+      discount: json['discount'] != null ? double.tryParse(json['discount'].toString()) ?? 0.0 : (json['discount_amount'] != null ? double.tryParse(json['discount_amount'].toString()) ?? 0.0 : 0.0),
+      tax: json['tax'] != null ? double.tryParse(json['tax'].toString()) ?? 0.0 : (json['tax_amount'] != null ? double.tryParse(json['tax_amount'].toString()) ?? 0.0 : 0.0),
       total: json['total'] != null ? double.tryParse(json['total'].toString()) ?? 0.0 : (json['total_amount'] != null ? double.tryParse(json['total_amount'].toString()) ?? 0.0 : 0.0),
       paymentMethod: json['payment_method']?.toString() ?? '',
       paidAmount: json['paid_amount'] != null ? double.tryParse(json['paid_amount'].toString()) ?? 0.0 : (json['payment_amount'] != null ? double.tryParse(json['payment_amount'].toString()) ?? 0.0 : 0.0),
       changeAmount: json['change_amount'] != null ? double.tryParse(json['change_amount'].toString()) ?? 0.0 : 0.0,
       notes: json['notes']?.toString(),
+      paymentProof: json['payment_proof']?.toString(),
       items: json['items'] != null
           ? (json['items'] as List)
               .map((item) => TransactionItem.fromJson(item))
@@ -79,22 +82,23 @@ class Transaction {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
       'transaction_number': transactionNumber,
       'type': type,
       'transaction_date': transactionDate.toIso8601String().split('T')[0],
-      'member_id': memberId,
-      'member_name': memberName,
+      if (memberId != null) 'member_id': memberId,
+      if (memberName != null) 'member_name': memberName,
       'subtotal': subtotal,
-      'discount': discount,
+      'discount_amount': discount,
       'tax': tax,
       'total': total,
       'payment_method': paymentMethod,
-      'paid_amount': paidAmount,
+      'payment_amount': paidAmount,
       'change_amount': changeAmount,
-      'notes': notes,
+      if (notes != null) 'notes': notes,
+      if (paymentProof != null) 'payment_proof': paymentProof,
       'items': items?.map((item) => item.toJson()).toList(),
-      'created_by': createdBy,
+      if (createdBy != null) 'created_by': createdBy,
     };
   }
 }

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
+import 'dart:convert';
 import '../../controllers/pos_controller.dart';
 import '../../widgets/loading_widget.dart';
 import '../../utils/constants.dart';
-import 'package:intl/intl.dart';
+import '../../services/printer_service.dart';
+import '../../models/transaction_model.dart';
 
 class PosScreen extends StatelessWidget {
   const PosScreen({Key? key}) : super(key: key);
@@ -472,16 +477,66 @@ class PosScreen extends StatelessWidget {
   void _showPaymentDialog(PosController controller) {
     final paidController = TextEditingController();
     String selectedPaymentMethod = 'Cash';
-    String? paymentProofPath;
+    XFile? paymentProofImage;
+    String? paymentProofBase64;
     bool isProcessing = false;
 
     Get.dialog(
       StatefulBuilder(
         builder: (context, setDialogState) {
-          final showProofUpload = selectedPaymentMethod != 'Cash';
+          final isCash = PrinterService.isCashPayment(selectedPaymentMethod);
+          final showProofUpload = !isCash;
+          final paidAmount = double.tryParse(paidController.text) ?? 0;
+          final changeAmount = paidAmount - controller.total.value;
+          
+          Future<void> captureFromCamera() async {
+            try {
+              final ImagePicker picker = ImagePicker();
+              final XFile? image = await picker.pickImage(
+                source: ImageSource.camera,
+                maxWidth: 1024,
+                maxHeight: 1024,
+                imageQuality: 80,
+              );
+              
+              if (image != null) {
+                final bytes = await image.readAsBytes();
+                final base64Image = base64Encode(bytes);
+                setDialogState(() {
+                  paymentProofImage = image;
+                  paymentProofBase64 = 'data:image/jpeg;base64,$base64Image';
+                });
+              }
+            } catch (e) {
+              Get.snackbar('Error', 'Gagal mengambil foto. Silakan coba lagi.');
+            }
+          }
+          
+          Future<void> pickFromGallery() async {
+            try {
+              final ImagePicker picker = ImagePicker();
+              final XFile? image = await picker.pickImage(
+                source: ImageSource.gallery,
+                maxWidth: 1024,
+                maxHeight: 1024,
+                imageQuality: 80,
+              );
+              
+              if (image != null) {
+                final bytes = await image.readAsBytes();
+                final base64Image = base64Encode(bytes);
+                setDialogState(() {
+                  paymentProofImage = image;
+                  paymentProofBase64 = 'data:image/jpeg;base64,$base64Image';
+                });
+              }
+            } catch (e) {
+              Get.snackbar('Error', 'Gagal memilih foto. Silakan coba lagi.');
+            }
+          }
           
           return AlertDialog(
-            title: const Text('Payment'),
+            title: const Text('Pembayaran'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -515,7 +570,7 @@ class PosScreen extends StatelessWidget {
                   DropdownButtonFormField<String>(
                     value: selectedPaymentMethod,
                     decoration: const InputDecoration(
-                      labelText: 'Payment Method',
+                      labelText: 'Metode Pembayaran',
                       border: OutlineInputBorder(),
                     ),
                     items: AppConstants.paymentMethods.map((method) {
@@ -527,7 +582,8 @@ class PosScreen extends StatelessWidget {
                     onChanged: (value) {
                       setDialogState(() {
                         selectedPaymentMethod = value!;
-                        paymentProofPath = null;
+                        paymentProofImage = null;
+                        paymentProofBase64 = null;
                       });
                     },
                   ),
@@ -536,12 +592,70 @@ class PosScreen extends StatelessWidget {
                   TextField(
                     controller: paidController,
                     decoration: const InputDecoration(
-                      labelText: 'Amount Paid',
+                      labelText: 'Jumlah Bayar',
                       prefixText: 'Rp ',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      setDialogState(() {});
+                    },
                   ),
+                  
+                  // Show change amount for Cash payment
+                  if (isCash && paidAmount > 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: changeAmount >= 0 
+                            ? AppColors.success.withOpacity(0.1) 
+                            : AppColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                        border: Border.all(
+                          color: changeAmount >= 0 
+                              ? AppColors.success 
+                              : AppColors.error,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Kembalian',
+                            style: TextStyle(
+                              color: changeAmount >= 0 
+                                  ? AppColors.success 
+                                  : AppColors.error,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            NumberFormat.currency(
+                              locale: 'id_ID',
+                              symbol: 'Rp ',
+                              decimalDigits: 0,
+                            ).format(changeAmount >= 0 ? changeAmount : 0),
+                            style: AppTextStyles.heading2.copyWith(
+                              color: changeAmount >= 0 
+                                  ? AppColors.success 
+                                  : AppColors.error,
+                            ),
+                          ),
+                          if (changeAmount < 0)
+                            Text(
+                              'Jumlah bayar kurang',
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                   
                   // Payment proof upload for non-cash payments
                   if (showProofUpload) ...[
@@ -555,52 +669,61 @@ class PosScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Icon(
-                            paymentProofPath != null
-                                ? Icons.check_circle
-                                : Icons.upload_file,
-                            size: 40,
-                            color: paymentProofPath != null
-                                ? AppColors.success
-                                : AppColors.textSecondary,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            paymentProofPath != null
-                                ? 'Payment proof uploaded'
-                                : 'Upload payment proof',
-                            style: TextStyle(
-                              color: paymentProofPath != null
-                                  ? AppColors.success
-                                  : AppColors.textSecondary,
+                          if (paymentProofImage != null) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                              child: Image.file(
+                                File(paymentProofImage!.path),
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle, 
+                                    color: AppColors.success, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Bukti pembayaran berhasil diambil',
+                                  style: TextStyle(
+                                    color: AppColors.success,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ] else ...[
+                            Icon(
+                              Icons.upload_file,
+                              size: 40,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              'Upload bukti pembayaran',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               OutlinedButton.icon(
-                                onPressed: () {
-                                  // In production, use image_picker to capture from camera
-                                  setDialogState(() {
-                                    paymentProofPath = 'camera_proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                                  });
-                                  Get.snackbar('Info', 'Camera capture simulated');
-                                },
+                                onPressed: captureFromCamera,
                                 icon: const Icon(Icons.camera_alt),
-                                label: const Text('Camera'),
+                                label: const Text('Kamera'),
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               OutlinedButton.icon(
-                                onPressed: () {
-                                  // In production, use image_picker to select from gallery
-                                  setDialogState(() {
-                                    paymentProofPath = 'gallery_proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                                  });
-                                  Get.snackbar('Info', 'Gallery selection simulated');
-                                },
+                                onPressed: pickFromGallery,
                                 icon: const Icon(Icons.photo_library),
-                                label: const Text('Gallery'),
+                                label: const Text('Galeri'),
                               ),
                             ],
                           ),
@@ -620,27 +743,34 @@ class PosScreen extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: isProcessing ? null : () => Get.back(),
-                child: const Text('Cancel'),
+                child: const Text('Batal'),
               ),
               ElevatedButton(
                 onPressed: isProcessing ? null : () async {
                   final paidAmount = double.tryParse(paidController.text) ?? 0;
                   
                   if (paidAmount <= 0) {
-                    Get.snackbar('Error', 'Please enter a valid amount');
+                    Get.snackbar('Error', 'Masukkan jumlah pembayaran yang valid');
                     return;
                   }
                   
                   if (paidAmount < controller.total.value) {
-                    Get.snackbar('Error', 'Insufficient payment amount');
+                    Get.snackbar('Error', 'Jumlah pembayaran kurang');
                     return;
                   }
                   
                   // For non-cash payments, require proof
-                  if (showProofUpload && paymentProofPath == null) {
-                    Get.snackbar('Error', 'Please upload payment proof');
+                  if (showProofUpload && paymentProofBase64 == null) {
+                    Get.snackbar('Error', 'Silakan upload bukti pembayaran');
                     return;
                   }
+                  
+                  // Store values before processing (cart will be cleared on success)
+                  final totalAmount = controller.total.value;
+                  final subtotalAmount = controller.subtotal.value;
+                  final discountAmount = controller.discount.value;
+                  final taxAmount = controller.tax.value;
+                  final cartItemsCopy = controller.cartItems.toList();
                   
                   setDialogState(() => isProcessing = true);
                   
@@ -648,28 +778,193 @@ class PosScreen extends StatelessWidget {
                     final success = await controller.processTransaction(
                       paymentMethod: selectedPaymentMethod,
                       paidAmount: paidAmount,
-                      // In production, paymentProofPath would be uploaded to server
+                      paymentProof: paymentProofBase64,
                     );
                     
                     if (success) {
                       Get.back();
-                      Get.snackbar(
-                        'Success',
-                        'Payment processed successfully',
-                        backgroundColor: AppColors.success,
-                        colorText: Colors.white,
+                      
+                      // Build transaction for receipt using stored values
+                      final changeAmt = paidAmount - totalAmount;
+                      final receiptTransaction = Transaction(
+                        transactionNumber: 'TRX-${DateTime.now().millisecondsSinceEpoch}',
+                        type: 'sale',
+                        transactionDate: DateTime.now(),
+                        subtotal: subtotalAmount,
+                        discount: discountAmount,
+                        tax: taxAmount,
+                        total: totalAmount,
+                        paymentMethod: selectedPaymentMethod,
+                        paidAmount: paidAmount,
+                        changeAmount: changeAmt > 0 ? changeAmt : 0,
+                        items: cartItemsCopy,
+                      );
+                      
+                      // Show success dialog with change amount and print option
+                      _showPaymentSuccessDialog(
+                        selectedPaymentMethod,
+                        paidAmount,
+                        totalAmount,
+                        receiptTransaction,
                       );
                     }
                   } finally {
                     setDialogState(() => isProcessing = false);
                   }
                 },
-                child: const Text('Process Payment'),
+                child: const Text('Proses Pembayaran'),
               ),
             ],
           );
         },
       ),
+    );
+  }
+  
+  void _showPaymentSuccessDialog(
+    String paymentMethod,
+    double paidAmount,
+    double totalAmount,
+    Transaction transaction,
+  ) {
+    final changeAmount = paidAmount - totalAmount;
+    final isCash = PrinterService.isCashPayment(paymentMethod);
+    final printerService = PrinterService();
+    
+    Get.dialog(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success, size: 28),
+            const SizedBox(width: 8),
+            const Text('Pembayaran Berhasil'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppBorderRadius.medium),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Total',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    NumberFormat.currency(
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(totalAmount),
+                    style: AppTextStyles.heading2.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Metode:', style: TextStyle(color: AppColors.textSecondary)),
+                      Text(paymentMethod, style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Bayar:', style: TextStyle(color: AppColors.textSecondary)),
+                      Text(
+                        NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp ',
+                          decimalDigits: 0,
+                        ).format(paidAmount),
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  if (isCash && changeAmount > 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'KEMBALIAN',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            NumberFormat.currency(
+                              locale: 'id_ID',
+                              symbol: 'Rp ',
+                              decimalDigits: 0,
+                            ).format(changeAmount),
+                            style: AppTextStyles.heading1.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Tutup'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              // Try to print receipt
+              if (printerService.isConnected) {
+                final printed = await printerService.printReceipt(transaction);
+                if (printed) {
+                  Get.snackbar(
+                    'Berhasil',
+                    'Struk berhasil dicetak',
+                    backgroundColor: AppColors.success,
+                    colorText: Colors.white,
+                  );
+                } else {
+                  Get.snackbar('Error', 'Gagal mencetak struk');
+                }
+              } else {
+                // Show printer not connected message
+                Get.snackbar(
+                  'Info',
+                  'Printer belum terhubung. Silakan hubungkan printer di Pengaturan.',
+                  duration: const Duration(seconds: 4),
+                );
+              }
+            },
+            icon: const Icon(Icons.print),
+            label: const Text('Cetak Struk'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
     );
   }
 }

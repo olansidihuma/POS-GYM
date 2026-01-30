@@ -172,6 +172,7 @@ class PosController extends GetxController {
     required double paidAmount,
     int? memberId,
     String? notes,
+    String? paymentProof,
   }) async {
     if (cartItems.isEmpty) {
       Get.snackbar('Error', 'Cart is empty');
@@ -198,13 +199,13 @@ class PosController extends GetxController {
         paidAmount: paidAmount,
         changeAmount: paidAmount - total.value,
         notes: notes,
+        paymentProof: paymentProof,
         items: cartItems,
       );
 
       final result = await _posService.createTransaction(transaction);
 
       if (result['success'] == true) {
-        Get.snackbar('Success', result['message']);
         clearCart();
         return true;
       } else {

@@ -52,6 +52,96 @@ if (!isset($input['payment_amount']) || $input['payment_amount'] <= 0) {
     exit();
 }
 
+/**
+ * Save base64 image to file and return file path
+ * Includes validation for file size and image type
+ */
+function savePaymentProof($base64Data) {
+    if (empty($base64Data)) {
+        return null;
+    }
+    
+    // Check if it's a valid base64 data URL
+    if (strpos($base64Data, 'data:image') !== 0) {
+        return $base64Data; // Already a file path
+    }
+    
+    // Check base64 string length (max ~5MB when encoded)
+    $maxBase64Length = 7 * 1024 * 1024; // ~5MB in base64
+    if (strlen($base64Data) > $maxBase64Length) {
+        return null; // File too large
+    }
+    
+    // Extract the base64 data
+    $parts = explode(',', $base64Data);
+    if (count($parts) !== 2) {
+        return null;
+    }
+    
+    // Determine file extension from MIME type
+    $mimeType = $parts[0];
+    $imageType = null;
+    if (strpos($mimeType, 'jpeg') !== false || strpos($mimeType, 'jpg') !== false) {
+        $imageType = 'jpg';
+    } elseif (strpos($mimeType, 'png') !== false) {
+        $imageType = 'png';
+    } elseif (strpos($mimeType, 'gif') !== false) {
+        $imageType = 'gif';
+    } elseif (strpos($mimeType, 'webp') !== false) {
+        $imageType = 'webp';
+    }
+    
+    // Reject unsupported image formats
+    if ($imageType === null) {
+        return null;
+    }
+    
+    // Decode the image
+    $imageData = base64_decode($parts[1]);
+    if ($imageData === false) {
+        return null;
+    }
+    
+    // Validate that the decoded data is actually an image
+    $imageInfo = @getimagesizefromstring($imageData);
+    if ($imageInfo === false) {
+        return null; // Not a valid image
+    }
+    
+    // Validate max file size (5MB)
+    $maxFileSize = 5 * 1024 * 1024;
+    if (strlen($imageData) > $maxFileSize) {
+        return null;
+    }
+    
+    // Create uploads directory if not exists
+    $uploadDir = __DIR__ . '/../../uploads/payment_proofs/';
+    if (!file_exists($uploadDir)) {
+        if (!mkdir($uploadDir, 0755, true)) {
+            error_log("Failed to create upload directory: $uploadDir");
+            return null;
+        }
+    }
+    
+    // Verify directory exists and is writable
+    if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+        error_log("Upload directory not writable: $uploadDir");
+        return null;
+    }
+    
+    // Generate unique filename
+    $filename = 'proof_' . date('Ymd_His') . '_' . uniqid() . '.' . $imageType;
+    $filepath = $uploadDir . $filename;
+    
+    // Save the file
+    if (file_put_contents($filepath, $imageData) !== false) {
+        return 'uploads/payment_proofs/' . $filename;
+    }
+    
+    error_log("Failed to save payment proof: $filepath");
+    return null;
+}
+
 // Get database connection
 $conn = getConnection();
 
@@ -130,7 +220,13 @@ try {
 
     // Insert transaction
     $paymentMethod = $input['payment_method'];
-    $paymentProof = isset($input['payment_proof']) ? trim($input['payment_proof']) : null;
+    
+    // Handle payment proof (save base64 image to file if provided)
+    $paymentProof = null;
+    if (isset($input['payment_proof']) && !empty($input['payment_proof'])) {
+        $paymentProof = savePaymentProof(trim($input['payment_proof']));
+    }
+    
     $notes = isset($input['notes']) ? trim($input['notes']) : null;
     $createdBy = $user['user_id'];
 
