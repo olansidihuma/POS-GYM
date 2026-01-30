@@ -52,6 +52,57 @@ if (!isset($input['payment_amount']) || $input['payment_amount'] <= 0) {
     exit();
 }
 
+/**
+ * Save base64 image to file and return file path
+ */
+function savePaymentProof($base64Data) {
+    if (empty($base64Data)) {
+        return null;
+    }
+    
+    // Check if it's a valid base64 data URL
+    if (strpos($base64Data, 'data:image') !== 0) {
+        return $base64Data; // Already a file path
+    }
+    
+    // Extract the base64 data
+    $parts = explode(',', $base64Data);
+    if (count($parts) !== 2) {
+        return null;
+    }
+    
+    // Determine file extension
+    $imageType = 'jpg';
+    if (strpos($parts[0], 'png') !== false) {
+        $imageType = 'png';
+    } elseif (strpos($parts[0], 'gif') !== false) {
+        $imageType = 'gif';
+    }
+    
+    // Decode the image
+    $imageData = base64_decode($parts[1]);
+    if ($imageData === false) {
+        return null;
+    }
+    
+    // Create uploads directory if not exists
+    $uploadDir = __DIR__ . '/../../uploads/payment_proofs/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    // Generate unique filename
+    $filename = 'proof_' . date('Ymd_His') . '_' . uniqid() . '.' . $imageType;
+    $filepath = $uploadDir . $filename;
+    
+    // Save the file
+    if (file_put_contents($filepath, $imageData)) {
+        return 'uploads/payment_proofs/' . $filename;
+    }
+    
+    return null;
+}
+
 // Get database connection
 $conn = getConnection();
 
@@ -130,7 +181,13 @@ try {
 
     // Insert transaction
     $paymentMethod = $input['payment_method'];
-    $paymentProof = isset($input['payment_proof']) ? trim($input['payment_proof']) : null;
+    
+    // Handle payment proof (save base64 image to file if provided)
+    $paymentProof = null;
+    if (isset($input['payment_proof']) && !empty($input['payment_proof'])) {
+        $paymentProof = savePaymentProof(trim($input['payment_proof']));
+    }
+    
     $notes = isset($input['notes']) ? trim($input['notes']) : null;
     $createdBy = $user['user_id'];
 

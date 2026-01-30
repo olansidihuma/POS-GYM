@@ -45,7 +45,7 @@ class AppConstants {
   static const List<int> membershipDurations = [1, 3, 6, 12];
   
   // Payment Methods
-  static const List<String> paymentMethods = ['Cash', 'Card', 'Transfer', 'E-Wallet'];
+  static const List<String> paymentMethods = ['Cash', 'Card', 'Transfer', 'QRIS', 'E-Wallet'];
   
   // Printer Settings
   static const int printerPaperWidth = 32; // characters per line
