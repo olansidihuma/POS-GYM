@@ -191,4 +191,85 @@ class MembershipService {
       };
     }
   }
+
+  // Package management CRUD operations
+  Future<Map<String, dynamic>> createPackage(Map<String, dynamic> packageData) async {
+    try {
+      final response = await _apiService.post(
+        '${AppConstants.membershipEndpoint}/packages.php',
+        data: packageData,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'package': response.data['data'],
+          'message': response.data['message'] ?? 'Package created successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to create package',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePackage(int id, Map<String, dynamic> packageData) async {
+    try {
+      final response = await _apiService.put(
+        '${AppConstants.membershipEndpoint}/packages.php',
+        data: {'id': id, ...packageData},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'package': response.data['data'],
+          'message': response.data['message'] ?? 'Package updated successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to update package',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> deletePackage(int id) async {
+    try {
+      final response = await _apiService.delete(
+        '${AppConstants.membershipEndpoint}/packages.php',
+        queryParameters: {'id': id},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Package deleted successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to delete package',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
 }

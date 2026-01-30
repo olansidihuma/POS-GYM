@@ -29,11 +29,13 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final result = await _posService.getProductCategories();
+      final result = await _posService.getAllCategories(includeInactive: true);
       if (result['success'] == true) {
         setState(() {
           _categories = result['categories'] ?? [];
         });
+      } else {
+        Get.snackbar('Error', result['message'] ?? 'Failed to load categories');
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load categories');
@@ -56,6 +58,7 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
     final nameController = TextEditingController(text: category?.name ?? '');
     final descriptionController = TextEditingController(text: category?.description ?? '');
     bool isActive = category?.isActive ?? true;
+    bool isSaving = false;
 
     Get.dialog(
       StatefulBuilder(
@@ -88,28 +91,59 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
                       });
                     },
                   ),
+                  if (isSaving)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: CircularProgressIndicator(),
+                    ),
                 ],
               ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(),
+                onPressed: isSaving ? null : () => Get.back(),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: isSaving ? null : () async {
                   if (nameController.text.trim().isEmpty) {
                     Get.snackbar('Error', 'Please enter category name');
                     return;
                   }
-                  Get.back();
-                  Get.snackbar(
-                    'Success',
-                    isEdit ? 'Category updated successfully' : 'Category created successfully',
-                    backgroundColor: AppColors.success,
-                    colorText: Colors.white,
-                  );
-                  _loadCategories();
+                  
+                  setDialogState(() => isSaving = true);
+                  
+                  try {
+                    final categoryData = {
+                      'name': nameController.text.trim(),
+                      'description': descriptionController.text.trim(),
+                      'status': isActive ? 'active' : 'inactive',
+                    };
+                    
+                    Map<String, dynamic> result;
+                    if (isEdit && category?.id != null) {
+                      result = await _posService.updateCategory(category!.id!, categoryData);
+                    } else {
+                      result = await _posService.createCategory(categoryData);
+                    }
+                    
+                    if (result['success'] == true) {
+                      Get.back();
+                      Get.snackbar(
+                        'Success',
+                        result['message'] ?? (isEdit ? 'Category updated successfully' : 'Category created successfully'),
+                        backgroundColor: AppColors.success,
+                        colorText: Colors.white,
+                      );
+                      _loadCategories();
+                    } else {
+                      Get.snackbar('Error', result['message'] ?? 'Operation failed');
+                    }
+                  } catch (e) {
+                    Get.snackbar('Error', 'Failed to save category');
+                  } finally {
+                    setDialogState(() => isSaving = false);
+                  }
                 },
                 child: Text(isEdit ? 'Update' : 'Create'),
               ),
@@ -132,15 +166,27 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
+            onPressed: () async {
               Get.back();
-              Get.snackbar(
-                'Success',
-                'Category deleted successfully',
-                backgroundColor: AppColors.success,
-                colorText: Colors.white,
-              );
-              _loadCategories();
+              
+              try {
+                if (category.id != null) {
+                  final result = await _posService.deleteCategory(category.id!);
+                  if (result['success'] == true) {
+                    Get.snackbar(
+                      'Success',
+                      'Category deleted successfully',
+                      backgroundColor: AppColors.success,
+                      colorText: Colors.white,
+                    );
+                    _loadCategories();
+                  } else {
+                    Get.snackbar('Error', result['message'] ?? 'Failed to delete category');
+                  }
+                }
+              } catch (e) {
+                Get.snackbar('Error', 'Failed to delete category');
+              }
             },
             child: const Text('Delete'),
           ),

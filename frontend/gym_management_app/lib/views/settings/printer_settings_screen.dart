@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
+import '../../services/settings_service.dart';
 
 class PrinterSettingsScreen extends StatefulWidget {
   const PrinterSettingsScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class PrinterSettingsScreen extends StatefulWidget {
 
 class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
+  final SettingsService _settingsService = SettingsService();
   
   final _shopNameController = TextEditingController(text: 'Gym Management');
   final _shopAddressController = TextEditingController();
@@ -22,7 +24,45 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   String? _selectedPrinter;
   bool _isScanning = false;
   bool _isPrinting = false;
+  bool _isLoading = true;
+  bool _isSaving = false;
   List<Map<String, String>> _availablePrinters = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _settingsService.getSettings();
+      if (result['success'] == true) {
+        final settings = result['settings'] as Map<String, dynamic>? ?? {};
+        
+        setState(() {
+          if (settings['shop_name'] != null) {
+            _shopNameController.text = settings['shop_name']['value'] ?? 'Gym Management';
+          }
+          if (settings['shop_address'] != null) {
+            _shopAddressController.text = settings['shop_address']['value'] ?? '';
+          }
+          if (settings['shop_phone'] != null) {
+            _shopPhoneController.text = settings['shop_phone']['value'] ?? '';
+          }
+          if (settings['receipt_footer'] != null) {
+            _footerController.text = settings['receipt_footer']['value'] ?? 'Thank you for your visit!';
+          }
+        });
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load settings');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -71,12 +111,31 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
 
   Future<void> _saveSettings() async {
     if (_formKey.currentState!.validate()) {
-      Get.snackbar(
-        'Success',
-        'Printer settings saved',
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-      );
+      setState(() => _isSaving = true);
+      
+      try {
+        final result = await _settingsService.updateSettings({
+          'shop_name': _shopNameController.text,
+          'shop_address': _shopAddressController.text,
+          'shop_phone': _shopPhoneController.text,
+          'receipt_footer': _footerController.text,
+        });
+        
+        if (result['success'] == true) {
+          Get.snackbar(
+            'Success',
+            'Printer settings saved',
+            backgroundColor: AppColors.success,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar('Error', result['message'] ?? 'Failed to save settings');
+        }
+      } catch (e) {
+        Get.snackbar('Error', 'Failed to save settings');
+      } finally {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -391,8 +450,8 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
               const SizedBox(height: AppSpacing.xl),
               
               CustomButton(
-                text: 'Save Settings',
-                onPressed: _saveSettings,
+                text: _isSaving ? 'Saving...' : 'Save Settings',
+                onPressed: _isSaving ? null : _saveSettings,
                 isFullWidth: true,
               ),
             ],

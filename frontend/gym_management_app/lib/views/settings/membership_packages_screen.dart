@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/loading_widget.dart';
 import '../../utils/constants.dart';
+import '../../services/membership_service.dart';
 
 class MembershipPackagesScreen extends StatefulWidget {
   const MembershipPackagesScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class MembershipPackagesScreen extends StatefulWidget {
 }
 
 class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
+  final MembershipService _membershipService = MembershipService();
   bool _isLoading = true;
   List<Map<String, dynamic>> _packages = [];
 
@@ -25,38 +27,28 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
   Future<void> _loadPackages() async {
     setState(() => _isLoading = true);
     
-    // Simulate API call - In production, fetch from actual API
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _packages = [
-        {
-          'id': 1,
-          'name': 'New Member',
-          'price': 45000.0,
-          'duration_days': 365,
-          'description': 'Membership for new members - 1 year',
-          'status': 'active',
-        },
-        {
-          'id': 2,
-          'name': 'Renewal',
-          'price': 35000.0,
-          'duration_days': 365,
-          'description': 'Membership renewal - 1 year',
-          'status': 'active',
-        },
-        {
-          'id': 3,
-          'name': 'Monthly',
-          'price': 50000.0,
-          'duration_days': 30,
-          'description': 'Monthly membership package',
-          'status': 'inactive',
-        },
-      ];
-      _isLoading = false;
-    });
+    try {
+      final result = await _membershipService.getMembershipPackages();
+      if (result['success'] == true) {
+        final packages = result['packages'] as List;
+        setState(() {
+          _packages = packages.map((p) => {
+            'id': p.id,
+            'name': p.name,
+            'price': p.price,
+            'duration_days': p.durationMonths != null ? p.durationMonths * 30 : 365,
+            'description': p.description ?? '',
+            'status': 'active',
+          }).toList();
+        });
+      } else {
+        Get.snackbar('Error', result['message'] ?? 'Failed to load packages');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load packages');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _showPackageDialog({Map<String, dynamic>? package}) {
@@ -72,6 +64,7 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
       text: package?['description'] ?? '',
     );
     bool isActive = package?['status'] == 'active';
+    bool isSaving = false;
 
     Get.dialog(
       StatefulBuilder(
@@ -118,16 +111,21 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
                       });
                     },
                   ),
+                  if (isSaving)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: CircularProgressIndicator(),
+                    ),
                 ],
               ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(),
+                onPressed: isSaving ? null : () => Get.back(),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: isSaving ? null : () async {
                   if (nameController.text.trim().isEmpty) {
                     Get.snackbar('Error', 'Please enter package name');
                     return;
@@ -136,14 +134,42 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
                     Get.snackbar('Error', 'Please enter price');
                     return;
                   }
-                  Get.back();
-                  Get.snackbar(
-                    'Success',
-                    isEdit ? 'Package updated successfully' : 'Package created successfully',
-                    backgroundColor: AppColors.success,
-                    colorText: Colors.white,
-                  );
-                  _loadPackages();
+                  
+                  setDialogState(() => isSaving = true);
+                  
+                  try {
+                    final packageData = {
+                      'name': nameController.text.trim(),
+                      'price': double.tryParse(priceController.text) ?? 0,
+                      'duration_days': int.tryParse(durationController.text) ?? 365,
+                      'description': descriptionController.text.trim(),
+                      'status': isActive ? 'active' : 'inactive',
+                    };
+                    
+                    Map<String, dynamic> result;
+                    if (isEdit && package?['id'] != null) {
+                      result = await _membershipService.updatePackage(package!['id'], packageData);
+                    } else {
+                      result = await _membershipService.createPackage(packageData);
+                    }
+                    
+                    if (result['success'] == true) {
+                      Get.back();
+                      Get.snackbar(
+                        'Success',
+                        result['message'] ?? (isEdit ? 'Package updated successfully' : 'Package created successfully'),
+                        backgroundColor: AppColors.success,
+                        colorText: Colors.white,
+                      );
+                      _loadPackages();
+                    } else {
+                      Get.snackbar('Error', result['message'] ?? 'Operation failed');
+                    }
+                  } catch (e) {
+                    Get.snackbar('Error', 'Failed to save package');
+                  } finally {
+                    setDialogState(() => isSaving = false);
+                  }
                 },
                 child: Text(isEdit ? 'Update' : 'Create'),
               ),
@@ -166,15 +192,25 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
+            onPressed: () async {
               Get.back();
-              Get.snackbar(
-                'Success',
-                'Package deleted successfully',
-                backgroundColor: AppColors.success,
-                colorText: Colors.white,
-              );
-              _loadPackages();
+              
+              try {
+                final result = await _membershipService.deletePackage(package['id']);
+                if (result['success'] == true) {
+                  Get.snackbar(
+                    'Success',
+                    'Package deleted successfully',
+                    backgroundColor: AppColors.success,
+                    colorText: Colors.white,
+                  );
+                  _loadPackages();
+                } else {
+                  Get.snackbar('Error', result['message'] ?? 'Failed to delete package');
+                }
+              } catch (e) {
+                Get.snackbar('Error', 'Failed to delete package');
+              }
             },
             child: const Text('Delete'),
           ),
