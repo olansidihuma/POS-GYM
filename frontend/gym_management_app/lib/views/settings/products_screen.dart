@@ -359,25 +359,42 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           ],
                         ),
                       )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                          childAspectRatio: 0.75,
-                        ),
-                        itemCount: _filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final product = _filteredProducts[index];
-                          return Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              onTap: () => _showProductDialog(product: product),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Calculate responsive cross axis count
+                          int crossAxisCount;
+                          double childAspectRatio;
+                          
+                          if (constraints.maxWidth > 900) {
+                            crossAxisCount = 4;
+                            childAspectRatio = 0.8;
+                          } else if (constraints.maxWidth > 600) {
+                            crossAxisCount = 3;
+                            childAspectRatio = 0.75;
+                          } else {
+                            crossAxisCount = 2;
+                            childAspectRatio = 0.75;
+                          }
+                          
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: AppSpacing.md,
+                              mainAxisSpacing: AppSpacing.md,
+                              childAspectRatio: childAspectRatio,
+                            ),
+                            itemCount: _filteredProducts.length,
+                            itemBuilder: (context, index) {
+                              final product = _filteredProducts[index];
+                              return Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () => _showProductDialog(product: product),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Expanded(
                                     flex: 3,
                                     child: Container(
                                       color: AppColors.background,
@@ -470,30 +487,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                     value: 'delete',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.delete, size: 18, color: AppColors.error),
-                                                        const SizedBox(width: 8),
-                                                        Text('Delete', style: TextStyle(color: AppColors.error)),
-                                                      ],
-                                                    ),
+                                                            Icon(Icons.delete, size: 18, color: AppColors.error),
+                                                            const SizedBox(width: 8),
+                                                            Text('Delete', style: TextStyle(color: AppColors.error)),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    onSelected: (value) {
+                                                      if (value == 'edit') {
+                                                        _showProductDialog(product: product);
+                                                      } else if (value == 'delete') {
+                                                        _confirmDelete(product);
+                                                      }
+                                                    },
                                                   ),
                                                 ],
-                                                onSelected: (value) {
-                                                  if (value == 'edit') {
-                                                    _showProductDialog(product: product);
-                                                  } else if (value == 'delete') {
-                                                    _confirmDelete(product);
-                                                  }
-                                                },
                                               ),
                                             ],
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),

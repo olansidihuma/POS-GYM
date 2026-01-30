@@ -122,13 +122,35 @@ class PosScreen extends StatelessWidget {
               return const Center(child: Text('No products available'));
             }
 
+            // Calculate responsive cross axis count based on screen width
+            final screenWidth = MediaQuery.of(context).size.width;
+            int crossAxisCount;
+            double childAspectRatio;
+            
+            if (screenWidth > 1200) {
+              crossAxisCount = 5;
+              childAspectRatio = 0.85;
+            } else if (screenWidth > 900) {
+              crossAxisCount = 4;
+              childAspectRatio = 0.8;
+            } else if (screenWidth > 600) {
+              crossAxisCount = 3;
+              childAspectRatio = 0.75;
+            } else if (screenWidth > 400) {
+              crossAxisCount = 2;
+              childAspectRatio = 0.85;
+            } else {
+              crossAxisCount = 2;
+              childAspectRatio = 0.7;
+            }
+
             return GridView.builder(
               padding: const EdgeInsets.all(AppSpacing.md),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
                 crossAxisSpacing: AppSpacing.md,
                 mainAxisSpacing: AppSpacing.md,
-                childAspectRatio: 0.8,
+                childAspectRatio: childAspectRatio,
               ),
               itemCount: controller.products.length,
               itemBuilder: (context, index) {
@@ -147,7 +169,7 @@ class PosScreen extends StatelessWidget {
                             color: AppColors.background,
                             child: Icon(
                               Icons.inventory_2,
-                              size: 60,
+                              size: screenWidth > 600 ? 60 : 40,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -161,6 +183,7 @@ class PosScreen extends StatelessWidget {
                                 product.name,
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth > 600 ? 14 : 12,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -175,6 +198,7 @@ class PosScreen extends StatelessWidget {
                                 style: AppTextStyles.bodyLarge.copyWith(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: screenWidth > 600 ? 16 : 13,
                                 ),
                               ),
                               Text(
@@ -183,6 +207,7 @@ class PosScreen extends StatelessWidget {
                                   color: product.isLowStock
                                       ? AppColors.error
                                       : AppColors.textSecondary,
+                                  fontSize: screenWidth > 600 ? 12 : 10,
                                 ),
                               ),
                             ],
@@ -447,52 +472,204 @@ class PosScreen extends StatelessWidget {
   void _showPaymentDialog(PosController controller) {
     final paidController = TextEditingController();
     String selectedPaymentMethod = 'Cash';
+    String? paymentProofPath;
+    bool isProcessing = false;
 
-    Get.defaultDialog(
-      title: 'Payment',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButtonFormField<String>(
-            value: selectedPaymentMethod,
-            decoration: const InputDecoration(
-              labelText: 'Payment Method',
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setDialogState) {
+          final showProofUpload = selectedPaymentMethod != 'Cash';
+          
+          return AlertDialog(
+            title: const Text('Payment'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Payment summary
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                    ),
+                    child: Obx(() => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Total:'),
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'id_ID',
+                            symbol: 'Rp ',
+                            decimalDigits: 0,
+                          ).format(controller.total.value),
+                          style: AppTextStyles.heading3.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    )),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  DropdownButtonFormField<String>(
+                    value: selectedPaymentMethod,
+                    decoration: const InputDecoration(
+                      labelText: 'Payment Method',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: AppConstants.paymentMethods.map((method) {
+                      return DropdownMenuItem(
+                        value: method,
+                        child: Text(method),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedPaymentMethod = value!;
+                        paymentProofPath = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  TextField(
+                    controller: paidController,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount Paid',
+                      prefixText: 'Rp ',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  
+                  // Payment proof upload for non-cash payments
+                  if (showProofUpload) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.divider),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.small),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            paymentProofPath != null
+                                ? Icons.check_circle
+                                : Icons.upload_file,
+                            size: 40,
+                            color: paymentProofPath != null
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            paymentProofPath != null
+                                ? 'Payment proof uploaded'
+                                : 'Upload payment proof',
+                            style: TextStyle(
+                              color: paymentProofPath != null
+                                  ? AppColors.success
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  // In production, use image_picker to capture from camera
+                                  setDialogState(() {
+                                    paymentProofPath = 'camera_proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                                  });
+                                  Get.snackbar('Info', 'Camera capture simulated');
+                                },
+                                icon: const Icon(Icons.camera_alt),
+                                label: const Text('Camera'),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  // In production, use image_picker to select from gallery
+                                  setDialogState(() {
+                                    paymentProofPath = 'gallery_proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                                  });
+                                  Get.snackbar('Info', 'Gallery selection simulated');
+                                },
+                                icon: const Icon(Icons.photo_library),
+                                label: const Text('Gallery'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
+                  if (isProcessing)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: CircularProgressIndicator(),
+                    ),
+                ],
+              ),
             ),
-            items: AppConstants.paymentMethods.map((method) {
-              return DropdownMenuItem(
-                value: method,
-                child: Text(method),
-              );
-            }).toList(),
-            onChanged: (value) {
-              selectedPaymentMethod = value!;
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: paidController,
-            decoration: const InputDecoration(
-              labelText: 'Amount Paid',
-              prefixText: 'Rp ',
-            ),
-            keyboardType: TextInputType.number,
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isProcessing ? null : () => Get.back(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isProcessing ? null : () async {
+                  final paidAmount = double.tryParse(paidController.text) ?? 0;
+                  
+                  if (paidAmount <= 0) {
+                    Get.snackbar('Error', 'Please enter a valid amount');
+                    return;
+                  }
+                  
+                  if (paidAmount < controller.total.value) {
+                    Get.snackbar('Error', 'Insufficient payment amount');
+                    return;
+                  }
+                  
+                  // For non-cash payments, require proof
+                  if (showProofUpload && paymentProofPath == null) {
+                    Get.snackbar('Error', 'Please upload payment proof');
+                    return;
+                  }
+                  
+                  setDialogState(() => isProcessing = true);
+                  
+                  try {
+                    final success = await controller.processTransaction(
+                      paymentMethod: selectedPaymentMethod,
+                      paidAmount: paidAmount,
+                      // In production, paymentProofPath would be uploaded to server
+                    );
+                    
+                    if (success) {
+                      Get.back();
+                      Get.snackbar(
+                        'Success',
+                        'Payment processed successfully',
+                        backgroundColor: AppColors.success,
+                        colorText: Colors.white,
+                      );
+                    }
+                  } finally {
+                    setDialogState(() => isProcessing = false);
+                  }
+                },
+                child: const Text('Process Payment'),
+              ),
+            ],
+          );
+        },
       ),
-      textConfirm: 'Process Payment',
-      textCancel: 'Cancel',
-      confirmTextColor: Colors.white,
-      onConfirm: () async {
-        final paidAmount = double.tryParse(paidController.text) ?? 0;
-        final success = await controller.processTransaction(
-          paymentMethod: selectedPaymentMethod,
-          paidAmount: paidAmount,
-        );
-        
-        if (success) {
-          Get.back();
-        }
-      },
     );
   }
 }

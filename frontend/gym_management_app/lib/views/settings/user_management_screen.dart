@@ -4,6 +4,7 @@ import '../../widgets/custom_textfield.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/loading_widget.dart';
 import '../../utils/constants.dart';
+import '../../services/user_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({Key? key}) : super(key: key);
@@ -13,43 +14,56 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
+  final UserService _userService = UserService();
   bool _isLoading = true;
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _roles = [];
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadUsers();
+    _loadData();
   }
 
-  Future<void> _loadUsers() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // Simulate API call - In production, fetch from actual API
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _users = [
-        {
-          'id': 1,
-          'username': 'admin',
-          'full_name': 'Administrator',
-          'email': 'admin@gym.com',
-          'role': 'Admin',
-          'status': 'active',
-        },
-        {
-          'id': 2,
-          'username': 'staff1',
-          'full_name': 'John Doe',
-          'email': 'john@gym.com',
-          'role': 'Pegawai',
-          'status': 'active',
-        },
-      ];
-      _isLoading = false;
-    });
+    try {
+      // Load users and roles in parallel
+      final results = await Future.wait([
+        _userService.getUsers(includeInactive: true),
+        _userService.getRoles(),
+      ]);
+      
+      final usersResult = results[0];
+      final rolesResult = results[1];
+      
+      setState(() {
+        if (usersResult['success'] == true) {
+          _users = (usersResult['users'] as List).map((u) => {
+            'id': u['id'],
+            'username': u['username'],
+            'full_name': u['full_name'],
+            'email': u['email'],
+            'phone': u['phone'],
+            'role': u['role_name'],
+            'role_id': u['role_id'],
+            'status': u['status'],
+          }).toList();
+        }
+        if (rolesResult['success'] == true) {
+          _roles = (rolesResult['roles'] as List).map((r) => {
+            'id': r['id'],
+            'name': r['name'],
+          }).toList();
+        }
+      });
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load data');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   List<Map<String, dynamic>> get _filteredUsers {
@@ -67,80 +81,162 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final usernameController = TextEditingController(text: user?['username'] ?? '');
     final fullNameController = TextEditingController(text: user?['full_name'] ?? '');
     final emailController = TextEditingController(text: user?['email'] ?? '');
+    final phoneController = TextEditingController(text: user?['phone'] ?? '');
     final passwordController = TextEditingController();
-    String selectedRole = user?['role'] ?? 'Pegawai';
+    int? selectedRoleId = user?['role_id'];
+    bool isSaving = false;
 
     Get.dialog(
-      AlertDialog(
-        title: Text(isEdit ? 'Edit User' : 'Add User'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CustomTextField(
-                controller: usernameController,
-                label: 'Username',
-                prefixIcon: Icons.person,
-                enabled: !isEdit,
+      StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(isEdit ? 'Edit User' : 'Add User'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomTextField(
+                    controller: usernameController,
+                    label: 'Username',
+                    prefixIcon: Icons.person,
+                    enabled: !isEdit,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  CustomTextField(
+                    controller: fullNameController,
+                    label: 'Full Name',
+                    prefixIcon: Icons.badge,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  CustomTextField(
+                    controller: emailController,
+                    label: 'Email',
+                    prefixIcon: Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  CustomTextField(
+                    controller: phoneController,
+                    label: 'Phone',
+                    prefixIcon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  if (!isEdit)
+                    CustomTextField(
+                      controller: passwordController,
+                      label: 'Password',
+                      prefixIcon: Icons.lock,
+                      obscureText: true,
+                    ),
+                  if (!isEdit) const SizedBox(height: AppSpacing.md),
+                  if (isEdit) ...[
+                    CustomTextField(
+                      controller: passwordController,
+                      label: 'New Password (leave blank to keep)',
+                      prefixIcon: Icons.lock,
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  DropdownButtonFormField<int>(
+                    value: selectedRoleId,
+                    decoration: const InputDecoration(
+                      labelText: 'Role',
+                      prefixIcon: Icon(Icons.admin_panel_settings),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _roles.map((role) {
+                      return DropdownMenuItem<int>(
+                        value: role['id'],
+                        child: Text(role['name']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedRoleId = value;
+                      });
+                    },
+                  ),
+                  if (isSaving)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: CircularProgressIndicator(),
+                    ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              CustomTextField(
-                controller: fullNameController,
-                label: 'Full Name',
-                prefixIcon: Icons.badge,
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Get.back(),
+                child: const Text('Cancel'),
               ),
-              const SizedBox(height: AppSpacing.md),
-              CustomTextField(
-                controller: emailController,
-                label: 'Email',
-                prefixIcon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (!isEdit)
-                CustomTextField(
-                  controller: passwordController,
-                  label: 'Password',
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                ),
-              if (!isEdit) const SizedBox(height: AppSpacing.md),
-              DropdownButtonFormField<String>(
-                value: selectedRole,
-                decoration: const InputDecoration(
-                  labelText: 'Role',
-                  prefixIcon: Icon(Icons.admin_panel_settings),
-                  border: OutlineInputBorder(),
-                ),
-                items: ['Admin', 'Pegawai'].map((role) {
-                  return DropdownMenuItem(value: role, child: Text(role));
-                }).toList(),
-                onChanged: (value) {
-                  selectedRole = value!;
+              ElevatedButton(
+                onPressed: isSaving ? null : () async {
+                  if (fullNameController.text.trim().isEmpty) {
+                    Get.snackbar('Error', 'Please enter full name');
+                    return;
+                  }
+                  if (!isEdit && usernameController.text.trim().isEmpty) {
+                    Get.snackbar('Error', 'Please enter username');
+                    return;
+                  }
+                  if (!isEdit && passwordController.text.isEmpty) {
+                    Get.snackbar('Error', 'Please enter password');
+                    return;
+                  }
+                  if (selectedRoleId == null) {
+                    Get.snackbar('Error', 'Please select a role');
+                    return;
+                  }
+                  
+                  setDialogState(() => isSaving = true);
+                  
+                  try {
+                    final userData = <String, dynamic>{
+                      'full_name': fullNameController.text.trim(),
+                      'email': emailController.text.trim(),
+                      'phone': phoneController.text.trim(),
+                      'role_id': selectedRoleId,
+                    };
+                    
+                    if (!isEdit) {
+                      userData['username'] = usernameController.text.trim();
+                      userData['password'] = passwordController.text;
+                    } else if (passwordController.text.isNotEmpty) {
+                      userData['password'] = passwordController.text;
+                    }
+                    
+                    Map<String, dynamic> result;
+                    if (isEdit && user?['id'] != null) {
+                      result = await _userService.updateUser(user!['id'], userData);
+                    } else {
+                      result = await _userService.createUser(userData);
+                    }
+                    
+                    if (result['success'] == true) {
+                      Get.back();
+                      Get.snackbar(
+                        'Success',
+                        result['message'] ?? (isEdit ? 'User updated successfully' : 'User created successfully'),
+                        backgroundColor: AppColors.success,
+                        colorText: Colors.white,
+                      );
+                      _loadData();
+                    } else {
+                      Get.snackbar('Error', result['message'] ?? 'Operation failed');
+                    }
+                  } catch (e) {
+                    Get.snackbar('Error', 'Failed to save user');
+                  } finally {
+                    setDialogState(() => isSaving = false);
+                  }
                 },
+                child: Text(isEdit ? 'Update' : 'Create'),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.snackbar(
-                'Success',
-                isEdit ? 'User updated successfully' : 'User created successfully',
-                backgroundColor: AppColors.success,
-                colorText: Colors.white,
-              );
-              _loadUsers();
-            },
-            child: Text(isEdit ? 'Update' : 'Create'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -149,7 +245,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     Get.dialog(
       AlertDialog(
         title: const Text('Confirm Delete'),
-        content: Text('Are you sure you want to delete ${user['full_name']}?'),
+        content: Text('Are you sure you want to deactivate ${user['full_name']}?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -157,17 +253,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
+            onPressed: () async {
               Get.back();
-              Get.snackbar(
-                'Success',
-                'User deleted successfully',
-                backgroundColor: AppColors.success,
-                colorText: Colors.white,
-              );
-              _loadUsers();
+              
+              try {
+                final result = await _userService.deleteUser(user['id']);
+                if (result['success'] == true) {
+                  Get.snackbar(
+                    'Success',
+                    'User deactivated successfully',
+                    backgroundColor: AppColors.success,
+                    colorText: Colors.white,
+                  );
+                  _loadData();
+                } else {
+                  Get.snackbar('Error', result['message'] ?? 'Failed to delete user');
+                }
+              } catch (e) {
+                Get.snackbar('Error', 'Failed to delete user');
+              }
             },
-            child: const Text('Delete'),
+            child: const Text('Deactivate'),
           ),
         ],
       ),

@@ -207,7 +207,7 @@ class PosService {
   Future<Map<String, dynamic>> createProduct(Product product) async {
     try {
       final response = await _apiService.post(
-        '${AppConstants.productsEndpoint}/create.php',
+        '/master/products.php',
         data: product.toJson(),
       );
 
@@ -234,7 +234,7 @@ class PosService {
   Future<Map<String, dynamic>> updateProduct(int id, Product product) async {
     try {
       final response = await _apiService.put(
-        '${AppConstants.productsEndpoint}/update.php',
+        '/master/products.php',
         data: {...product.toJson(), 'id': id},
       );
 
@@ -261,7 +261,7 @@ class PosService {
   Future<Map<String, dynamic>> deleteProduct(int id) async {
     try {
       final response = await _apiService.delete(
-        '${AppConstants.productsEndpoint}/delete.php',
+        '/master/products.php',
         queryParameters: {'id': id},
       );
 
@@ -275,6 +275,126 @@ class PosService {
       return {
         'success': false,
         'message': response.data['message'] ?? 'Failed to delete product',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  // Category CRUD operations
+  Future<Map<String, dynamic>> getAllCategories({bool includeInactive = false}) async {
+    try {
+      final response = await _apiService.get(
+        '/master/categories.php',
+        queryParameters: {
+          if (includeInactive) 'include_inactive': '1',
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'];
+        final List<ProductCategory> categories;
+        
+        if (data is List) {
+          categories = data.map((json) => ProductCategory.fromJson(json as Map<String, dynamic>)).toList();
+        } else if (data is Map<String, dynamic>) {
+          categories = [ProductCategory.fromJson(data)];
+        } else {
+          categories = [];
+        }
+
+        return {
+          'success': true,
+          'categories': categories,
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to load categories',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> createCategory(Map<String, dynamic> categoryData) async {
+    try {
+      final response = await _apiService.post(
+        '/master/categories.php',
+        data: categoryData,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'category': ProductCategory.fromJson(response.data['data']),
+          'message': response.data['message'] ?? 'Category created successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to create category',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> updateCategory(int id, Map<String, dynamic> categoryData) async {
+    try {
+      final response = await _apiService.put(
+        '/master/categories.php',
+        data: {'id': id, ...categoryData},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'category': ProductCategory.fromJson(response.data['data']),
+          'message': response.data['message'] ?? 'Category updated successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to update category',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteCategory(int id) async {
+    try {
+      final response = await _apiService.delete(
+        '/master/categories.php',
+        queryParameters: {'id': id},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Category deleted successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': response.data['message'] ?? 'Failed to delete category',
       };
     } catch (e) {
       return {
