@@ -36,9 +36,9 @@ class _MembershipPackagesScreenState extends State<MembershipPackagesScreen> {
             'id': p.id,
             'name': p.name,
             'price': p.price,
-            'duration_days': p.durationMonths != null ? p.durationMonths * 30 : 365,
+            'duration_days': p.effectiveDurationDays,
             'description': p.description ?? '',
-            'status': 'active',
+            'status': p.isActive ? 'active' : 'inactive',
           }).toList();
         });
       } else {

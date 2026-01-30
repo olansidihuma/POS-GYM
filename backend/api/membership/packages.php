@@ -74,6 +74,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $description = isset($input['description']) ? trim($input['description']) : '';
     $status = isset($input['status']) ? $input['status'] : 'active';
 
+    // Validate price is positive
+    if ($price <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Price must be greater than 0'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
+    // Validate duration is positive
+    if ($durationDays <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Duration must be greater than 0'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
     // Check for duplicate name
     $existing = fetchOne($conn, "SELECT id FROM membership_types WHERE name = ?", [$name]);
     if ($existing) {

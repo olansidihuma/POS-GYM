@@ -83,7 +83,8 @@ class MembershipPackage {
   final String name;
   final String description;
   final double price;
-  final int durationMonths;
+  final int? durationMonths;
+  final int? durationDays;
   final String? benefits;
   final bool isActive;
   final DateTime? createdAt;
@@ -93,21 +94,31 @@ class MembershipPackage {
     required this.name,
     required this.description,
     required this.price,
-    required this.durationMonths,
+    this.durationMonths,
+    this.durationDays,
     this.benefits,
     this.isActive = true,
     this.createdAt,
   });
 
   factory MembershipPackage.fromJson(Map<String, dynamic> json) {
+    // Support both duration_days and duration_months from API
+    int? durationDays = json['duration_days'] != null 
+        ? int.tryParse(json['duration_days'].toString()) 
+        : null;
+    int? durationMonths = json['duration_months'] != null 
+        ? int.tryParse(json['duration_months'].toString()) 
+        : null;
+    
     return MembershipPackage(
       id: json['id'],
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       price: double.parse(json['price'].toString()),
-      durationMonths: json['duration_months'],
+      durationMonths: durationMonths,
+      durationDays: durationDays,
       benefits: json['benefits'],
-      isActive: json['is_active'] == 1 || json['is_active'] == true,
+      isActive: json['is_active'] == 1 || json['is_active'] == true || json['status'] == 'active',
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : null,
@@ -121,8 +132,16 @@ class MembershipPackage {
       'description': description,
       'price': price,
       'duration_months': durationMonths,
+      'duration_days': durationDays,
       'benefits': benefits,
       'is_active': isActive ? 1 : 0,
     };
+  }
+  
+  /// Get duration in days, preferring durationDays if set
+  int get effectiveDurationDays {
+    if (durationDays != null && durationDays! > 0) return durationDays!;
+    if (durationMonths != null) return durationMonths! * 30;
+    return 365; // Default to 1 year
   }
 }

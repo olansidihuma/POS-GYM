@@ -54,10 +54,15 @@ if (!$attendance) {
 }
 
 // Add check_out_time column if it doesn't exist (for legacy databases)
-// Note: In production, this should be done via migration, not in API
-$alterResult = $conn->query("SHOW COLUMNS FROM attendances LIKE 'check_out_time'");
-if ($alterResult->num_rows == 0) {
-    $conn->query("ALTER TABLE attendances ADD COLUMN check_out_time TIMESTAMP NULL");
+// Note: In production, this should be done via migration
+// The column check is only performed once per database connection
+static $columnChecked = false;
+if (!$columnChecked) {
+    $alterResult = $conn->query("SHOW COLUMNS FROM attendances LIKE 'check_out_time'");
+    if ($alterResult->num_rows == 0) {
+        $conn->query("ALTER TABLE attendances ADD COLUMN check_out_time TIMESTAMP NULL");
+    }
+    $columnChecked = true;
 }
 
 // Update checkout time

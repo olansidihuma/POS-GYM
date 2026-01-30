@@ -100,12 +100,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $username = trim($input['username']);
-    $password = password_hash($input['password'], PASSWORD_DEFAULT);
+    $password = $input['password'];
     $fullName = trim($input['full_name']);
     $email = isset($input['email']) ? trim($input['email']) : null;
     $phone = isset($input['phone']) ? trim($input['phone']) : null;
     $roleId = intval($input['role_id']);
     $status = isset($input['status']) ? $input['status'] : 'active';
+
+    // Validate password length
+    if (strlen($password) < 6) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Password must be at least 6 characters'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
+    // Validate email format if provided
+    if ($email !== null && $email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid email format'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
+    // Hash password after validation
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Validate username uniqueness
     $existing = fetchOne($conn, "SELECT id FROM users WHERE username = ?", [$username]);
@@ -135,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $sql = "INSERT INTO users (username, password, full_name, email, phone, role_id, status) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('sssssis', $username, $password, $fullName, $email, $phone, $roleId, $status);
+    $stmt->bind_param('sssssis', $username, $hashedPassword, $fullName, $email, $phone, $roleId, $status);
     
     if ($stmt->execute()) {
         $newId = $conn->insert_id;

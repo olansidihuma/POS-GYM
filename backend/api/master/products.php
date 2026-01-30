@@ -91,6 +91,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $status = isset($input['status']) ? $input['status'] : 'active';
     $code = isset($input['code']) ? trim($input['code']) : '';
 
+    // Validate price is positive
+    if ($price <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Price must be greater than 0'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
+    // Validate discount is within range
+    if ($discount < 0 || $discount > 100) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Discount must be between 0 and 100'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
+    // Validate stock is non-negative
+    if ($stock < 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Stock cannot be negative'
+        ], JSON_NUMERIC_CHECK);
+        closeConnection($conn);
+        exit();
+    }
+
     // Check if category exists
     $category = fetchOne($conn, "SELECT id FROM product_categories WHERE id = ?", [$categoryId]);
     if (!$category) {
