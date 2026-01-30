@@ -72,8 +72,15 @@ class User {
     
     // Staff has limited permissions
     if (isStaff()) {
-      return ['view_members', 'add_member', 'record_attendance', 'pos_operations']
-          .contains(permission);
+      return [
+        'view_members', 
+        'add_member', 
+        'record_attendance', 
+        'pos_operations',
+        'manage_membership',
+        'view_reports',
+        'view_settings',
+      ].contains(permission);
     }
     
     return false;

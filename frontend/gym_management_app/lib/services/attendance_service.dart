@@ -12,8 +12,9 @@ class AttendanceService {
   }) async {
     try {
       final response = await _apiService.post(
-        '${AppConstants.attendanceEndpoint}/check-in.php',
+        '${AppConstants.attendanceEndpoint}/checkin.php',
         data: {
+          'attendance_type': 'member',
           'member_id': memberId,
           'check_in_method': method,
           'notes': notes,
@@ -43,7 +44,7 @@ class AttendanceService {
   Future<Map<String, dynamic>> checkOut(int attendanceId) async {
     try {
       final response = await _apiService.post(
-        '${AppConstants.attendanceEndpoint}/check-out.php',
+        '${AppConstants.attendanceEndpoint}/checkout.php',
         data: {'attendance_id': attendanceId},
       );
 
@@ -131,7 +132,7 @@ class AttendanceService {
       };
 
       final response = await _apiService.get(
-        '${AppConstants.attendanceEndpoint}/stats.php',
+        '${AppConstants.attendanceEndpoint}/summary.php',
         queryParameters: queryParams,
       );
 
